@@ -6,37 +6,43 @@
   <style>
     table {
       border-collapse: collapse;
-      width: 100%;
+      width: 45%;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+      border-radius: 10px;
     }
-
-    th,
-    td {
+  
+    table th,
+    table td {
       text-align: left;
       padding: 8px;
+      border-bottom: 1px solid #ddd;
     }
-
-    tr:nth-child(even) {
-      background-color: #f2f2f2;
-    }
-
-    th {
-      background-color: #4CAF50;
+  
+    table tr:first-child {
+      background-color: #525252;
       color: white;
+      border-radius: 10px 10px 0 0;
     }
-
-    .country-info {
-      display: none;
-      padding: 20px;
+  
+    table tr:nth-child(even) {
       background-color: #f2f2f2;
-      transition: all 0.5s ease-in-out;
     }
-
-    .selected {
-      background-color: #f9f9f9;
+  
+    .country-card {
+      position: fixed;
+      top: 50%;
+      left: 75%;
+      transform: translate(-50%, -50%);
+      z-index: 999;
+      background-color: #f2f2f2;
+      padding: 20px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+      border-radius: 10px;
+      border: 2px solid #333;
     }
-
-    .selected+.country-info {
-      display: block;
+  
+    .country-card h2 {
+      margin-top: 0;
     }
   </style>
 </head>
@@ -48,7 +54,9 @@
 
   <table id="countries-table">
     <tr>
+      <th class="flag-column"></th>
       <th>Country</th>
+      <th>Region</th>
     </tr>
   </table>
 
@@ -63,13 +71,29 @@
             return country.independent;
           });
 
+          independentCountries.sort((a, b) => {
+            const nameA = a.name.common.toLowerCase();
+            const nameB = b.name.common.toLowerCase();
+            return nameA.localeCompare(nameB);
+          });
+
           const countriesTable = document.getElementById('countries-table');
           independentCountries.forEach(country => {
             const countryName = country.name.common;
+            const countryRegion = country.region || 'N/A';
             const row = document.createElement('tr');
-            const cell = document.createElement('td');
-            cell.textContent = countryName;
-            row.appendChild(cell);
+            const flagCell = document.createElement('td');
+            const nameCell = document.createElement('td');
+            const regionCell = document.createElement('td');
+            const flagImg = document.createElement('img');
+            flagImg.src = `https://flagcdn.com/24x18/${getCountryCode(country)}.png`;
+            flagImg.alt = `${countryName} Flag`;
+            flagCell.appendChild(flagImg);
+            nameCell.textContent = countryName;
+            regionCell.textContent = countryRegion;
+            row.appendChild(flagCell);
+            row.appendChild(nameCell);
+            row.appendChild(regionCell);
             row.onclick = function () {
               showCountryInfo(row, country);
             };
@@ -81,47 +105,64 @@
         });
     }
 
-    function showCountryInfo(row, country) {
-      const countryInfo = document.createElement('tr');
-      countryInfo.classList.add('country-info');
-      countryInfo.innerHTML = `
-        <td colspan="1"></td>
-        <td colspan="3">
-          <h2>${country.name.common}</h2>
-          <p><strong>Capital:</strong> ${country.capital}</p>
-          <p><strong>Language:</strong> ${country.languages[Object.keys(country.languages)[0]]}</p>
-          <p><strong>Population:</strong> ${country.population.toLocaleString()}</p>
-          <p><strong>Region:</strong> ${country.region}</p>
-        </td>
-      `;
+    let openCountryRow = null;
 
-      if (row.nextElementSibling && row.nextElementSibling.classList.contains('country-info')) {
-        row.nextElementSibling.remove();
-        row.classList.remove('selected');
-      } else {
-        row.classList.add('selected');
-        row.parentNode.insertBefore(countryInfo, row.nextSibling);
+    function showCountryInfo(row, country) {
+      const countryCard = document.createElement('div');
+      countryCard.classList.add('country-card');
+      countryCard.innerHTML = `
+      <img src="https://flagcdn.com/h120/${getCountryCode(country)}.png" height="120" width="190" alt="${country.name.common} Flag">
+      <h2>${country.name.common}</h2>
+      <p><strong>Capital:</strong> ${country.capital}</p>
+      <p><strong>Language:</strong> ${country.languages[Object.keys(country.languages)[0]]}</p>
+      <p><strong>Currency:</strong> ${getCurrency(country.currencies)}</p>
+      <p><strong>Population:</strong> ${country.population.toLocaleString()}</p>`;
+
+      if (openCountryRow) {
+        openCountryRow.classList.remove('selected');
+        document.body.removeChild(openCountryRow);
       }
+
+      if (row !== openCountryRow) {
+        row.classList.add('selected');
+        document.body.appendChild(countryCard);
+        openCountryRow = countryCard;
+      } else {
+        openCountryRow = null;
+      }
+    }
+
+    function getCountryCode(country) {
+      const alpha2Code = country.cca2;
+      const alpha3Code = country.cca3;
+      return alpha2Code ? alpha2Code.toLowerCase() : alpha3Code.toLowerCase();
+    }
+
+    function getCurrency(currencies) {
+      const currencyKeys = Object.keys(currencies);
+      if (currencyKeys.length > 0) {
+        const currencyCode = currencyKeys[0];
+        const currency = currencies[currencyCode];
+        return `${currency.name} (${currencyCode})`;
+      }
+      return 'N/A';
     }
 
     function sortTable() {
       const countriesTable = document.getElementById('countries-table');
       const rows = Array.from(countriesTable.rows).slice(1);
-
       rows.sort((a, b) => {
-        const nameA = a.cells[0].textContent.toLowerCase();
-        const nameB = b.cells[0].textContent.toLowerCase();
+        const nameA = a.cells[1].textContent.toLowerCase();
+        const nameB = b.cells[1].textContent.toLowerCase();
         if (sortOrder === 'asc') {
           return nameA.localeCompare(nameB);
         } else {
           return nameB.localeCompare(nameA);
         }
       });
-
       rows.forEach(row => {
         countriesTable.appendChild(row);
       });
-
       toggleSortOrder();
       updateSortButton();
     }
@@ -133,9 +174,15 @@
     function updateSortButton() {
       const sortButton = document.getElementById('sort-button');
       sortButton.textContent = sortOrder === 'asc' ? 'A-Z' : 'Z-A';
+      sortButton.dataset.sortOrder = sortOrder;
     }
 
-    document.addEventListener('DOMContentLoaded', fetchCountries);
+    document.addEventListener('DOMContentLoaded', function () {
+      toggleSortOrder();
+      fetchCountries();
+      updateSortButton();
+    });
+
     updateSortButton();
   </script>
 </body>
