@@ -23,33 +23,55 @@
       background-color: #4CAF50;
       color: white;
     }
+
+    .country-info {
+      display: none;
+      padding: 20px;
+      background-color: #f2f2f2;
+      transition: all 0.5s ease-in-out;
+    }
+
+    .selected {
+      background-color: #f9f9f9;
+    }
+
+    .selected+.country-info {
+      display: block;
+    }
   </style>
 </head>
 
 <body>
-  <h1>County List</h1>
+  <h1>Country List</h1>
 
-  <table>
+  <button id="sort-button" onclick="sortTable()">A-Z</button>
+
+  <table id="countries-table">
     <tr>
       <th>Country</th>
     </tr>
-
   </table>
 
   <script>
+    let sortOrder = 'asc';
+
     function fetchCountries() {
       fetch('https://restcountries.com/v3.1/all')
         .then(response => response.json())
         .then(data => {
-          const countriesTable = document.querySelector('table');
-          data.forEach(country => {
+          const independentCountries = data.filter(country => {
+            return country.independent;
+          });
+
+          const countriesTable = document.getElementById('countries-table');
+          independentCountries.forEach(country => {
             const countryName = country.name.common;
             const row = document.createElement('tr');
             const cell = document.createElement('td');
             cell.textContent = countryName;
             row.appendChild(cell);
             row.onclick = function () {
-              goToCountry(countryName);
+              showCountryInfo(row, country);
             };
             countriesTable.appendChild(row);
           });
@@ -58,10 +80,63 @@
           console.log('Error:', error);
         });
     }
-    function goToCountry(country) {
-      window.location.href = 'https://nationhub.netlify.app/countries/' + encodeURIComponent(country);
+
+    function showCountryInfo(row, country) {
+      const countryInfo = document.createElement('tr');
+      countryInfo.classList.add('country-info');
+      countryInfo.innerHTML = `
+        <td colspan="1"></td>
+        <td colspan="3">
+          <h2>${country.name.common}</h2>
+          <p><strong>Capital:</strong> ${country.capital}</p>
+          <p><strong>Language:</strong> ${country.languages[Object.keys(country.languages)[0]]}</p>
+          <p><strong>Population:</strong> ${country.population.toLocaleString()}</p>
+          <p><strong>Region:</strong> ${country.region}</p>
+        </td>
+      `;
+
+      if (row.nextElementSibling && row.nextElementSibling.classList.contains('country-info')) {
+        row.nextElementSibling.remove();
+        row.classList.remove('selected');
+      } else {
+        row.classList.add('selected');
+        row.parentNode.insertBefore(countryInfo, row.nextSibling);
+      }
     }
+
+    function sortTable() {
+      const countriesTable = document.getElementById('countries-table');
+      const rows = Array.from(countriesTable.rows).slice(1);
+
+      rows.sort((a, b) => {
+        const nameA = a.cells[0].textContent.toLowerCase();
+        const nameB = b.cells[0].textContent.toLowerCase();
+        if (sortOrder === 'asc') {
+          return nameA.localeCompare(nameB);
+        } else {
+          return nameB.localeCompare(nameA);
+        }
+      });
+
+      rows.forEach(row => {
+        countriesTable.appendChild(row);
+      });
+
+      toggleSortOrder();
+      updateSortButton();
+    }
+
+    function toggleSortOrder() {
+      sortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
+    }
+
+    function updateSortButton() {
+      const sortButton = document.getElementById('sort-button');
+      sortButton.textContent = sortOrder === 'asc' ? 'A-Z' : 'Z-A';
+    }
+
     document.addEventListener('DOMContentLoaded', fetchCountries);
+    updateSortButton();
   </script>
 </body>
 
