@@ -1,48 +1,68 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-  <title>Список стран</title>
+  <title>NationHub</title>
   <style>
     table {
       border-collapse: collapse;
       width: 100%;
     }
-    
-    th, td {
+
+    th,
+    td {
       text-align: left;
       padding: 8px;
     }
-    
+
     tr:nth-child(even) {
       background-color: #f2f2f2;
     }
-    
+
     th {
       background-color: #4CAF50;
       color: white;
     }
   </style>
 </head>
+
 <body>
-  <h1>Список стран</h1>
-  
+  <h1>County List</h1>
+
   <table>
     <tr>
-      <th>Страна</th>
+      <th>Country</th>
     </tr>
-    <tr onclick="goToCountry('Афганистан')">
-      <td>Афганистан</td>
-    </tr>
-    <tr onclick="goToCountry('Албания')">
-      <td>Албания</td>
-    </tr>
-    <!-- Вставьте остальные строки с данными о странах здесь -->
+
   </table>
-  
+
   <script>
+    function fetchCountries() {
+      fetch('https://restcountries.com/v3.1/all')
+        .then(response => response.json())
+        .then(data => {
+          const countriesTable = document.querySelector('table');
+          data.forEach(country => {
+            const countryName = country.name.common;
+            const row = document.createElement('tr');
+            const cell = document.createElement('td');
+            cell.textContent = countryName;
+            row.appendChild(cell);
+            row.onclick = function () {
+              goToCountry(countryName);
+            };
+            countriesTable.appendChild(row);
+          });
+        })
+        .catch(error => {
+          console.log('Error:', error);
+        });
+    }
     function goToCountry(country) {
       window.location.href = 'https://nationhub.netlify.app/countries/' + encodeURIComponent(country);
     }
+    document.addEventListener('DOMContentLoaded', fetchCountries);
   </script>
 </body>
+
 </html>
