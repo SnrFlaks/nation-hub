@@ -25,9 +25,14 @@
       color: white;
     }
 
-    table tr:not(:first-child):hover {
-      background-color: #c0c0c0;
+    table tr:not(:first-child) {
+      transition: transform 0.3s ease;
+    }
+
+    table tr:not(:first-child):hover,
+    tr.selected {
       cursor: pointer;
+      transform: scale(1.1);
     }
 
     table tr:first-of-type th:first-child {
@@ -38,12 +43,12 @@
       border-top-right-radius: 6px;
     }
 
-    table tr:nth-child(even) {
-      background-color: #f2f2f2;
+    table tr:not(:first-child):nth-child(odd) {
+      background-color: #f8f8f8;
     }
 
-    table tr.selected {
-      background-color: #c0c0c0;
+    table tr:nth-child(even) {
+      background-color: #e6e6e6;
     }
 
     .table-container {
@@ -56,6 +61,7 @@
 
     body {
       font-family: 'Roboto Mono', monospace;
+      background-color: #d1d1d1;
     }
 
     h1 {
@@ -318,72 +324,73 @@
 
       let openCountryRow = null;
 
-      function hideCountryInfo() {
-        if (openCountryRow) {
-          if (openCountryRow.rowElement) {
-            openCountryRow.rowElement.classList.remove('selected');
-          }
-          if (openCountryRow.countryCard) {
-            document.body.removeChild(openCountryRow.countryCard);
-          }
-          openCountryRow = null;
-        }
-      }
-
       function showExpandedCountryInfo(row, country) {
         const countryCard = document.createElement('div');
         countryCard.classList.add('country-card');
         countryCard.innerHTML = '<div class="loader"></div>';
         const apiUrl = `https://api.api-ninjas.com/v1/country?name=${getCountryCode(country)}`;
-        fetch(apiUrl, {
-          headers: {
-            'X-Api-Key': 'W+OQ/iBAPzIQYLIRvdQgVQ==ixnCBWtlJHxmXrMv'
-          }
-        })
-          .then(response => response.json())
-          .then(data => {
-            const countryData = data[0];
-            const gdp = countryData.gdp || 'N/A';
-            const gdpGrowth = countryData.gdp_growth || 'N/A';
-            const territory = countryData.surface_area || 'N/A';
-            const currencyCode = getCurrencyCode(country.currencies);
-            const exchangeUrl = `https://api.api-ninjas.com/v1/convertcurrency?have=${currencyCode}&want=USD&amount=1`;
-            fetch(exchangeUrl)
-              .then(response => response.json())
-              .then(data => {
-                const exchangeRate = data.new_amount;
-                const currencyDisplay = `${currencyCode} (${exchangeRate.toFixed(2)} USD)`;
-                countryCard.innerHTML = `
-                  <span class ="flag-coat">
-                    <img src="https://flagcdn.com/h120/${getCountryCode(country)}.png" height="120" width="190" alt="${country.name.common} Flag">
-                    <img src="https://mainfacts.com/media/images/coats_of_arms/${getCountryCode(country)}.svg" alt="${country.name.common} Coat">
-                  </span>
-                  <h2>${country.name.common}</h2>
-                  <p><strong>Capital:</strong> ${country.capital}</p>
-                  <p><strong>Language:</strong> ${country.languages[Object.keys(country.languages)[0]]}</p>
-                  <p><strong>Currency:</strong> ${currencyDisplay}</p>
-                  <p><strong>GDP:</strong> $${(gdp / 1000).toFixed(2)}b <i class="fas fa-dollar-sign"></i></p>
-                  <p><strong>GDP Growth:</strong> <span class="gdp-growth ${gdpGrowth > 0 ? 'positive' : 'negative'}">${gdpGrowth}% ${gdpGrowth > 0 ? '&#8593;' : '&#8595;'}</span></p>
-                  <p><strong>Population:</strong> ${country.population.toLocaleString()}</p>
-                  <p><strong>Territory:</strong> ${territory} km<sup>2</sup></p>
-                  <p><strong>Region:</strong> ${country.region}/${country.subregion}</p>
-                  <p><strong>Neighboring Countries:</strong> ${getNeighboringCountries(country)}</p>
-                  <span id="expand-icon-less" class="material-symbols-outlined">expand_less</span>`;
-                const expandIcon = document.getElementById('expand-icon-less');
-                expandIcon.addEventListener('click', function () {
-                  hideCountryInfo();
-                  showCountryInfo(row, country);
-                });
-              })
-              .catch(error => {
-                console.log('Error:', error);
-                countryCard.innerHTML = 'Failed to fetch country information.';
-              });
+        const cachedData = localStorage.getItem(apiUrl); // Проверяем наличие кэшированных данных
+        if (cachedData) {
+          const data = JSON.parse(cachedData);
+          renderCountryInfo(data);
+        } else {
+          fetch(apiUrl, {
+            headers: {
+              'X-Api-Key': 'W+OQ/iBAPzIQYLIRvdQgVQ==ixnCBWtlJHxmXrMv'
+            }
           })
-          .catch(error => {
-            console.log('Error:', error);
-            countryCard.innerHTML = 'Failed to fetch country information.';
-          });
+            .then(response => response.json())
+            .then(data => {
+              renderCountryInfo(data);
+              localStorage.setItem(apiUrl, JSON.stringify(data));
+            })
+            .catch(error => {
+              console.log('Error:', error);
+              countryCard.innerHTML = 'Failed to fetch country information.';
+            });
+        }
+
+        function renderCountryInfo(data) {
+          const countryData = data[0];
+          const gdp = countryData.gdp || 'N/A';
+          const gdpGrowth = countryData.gdp_growth || 'N/A';
+          const gdpPerCapita = countryData.gdp_per_capita || 'N/A';
+          const territory = countryData.surface_area || 'N/A';
+          const currencyCode = getCurrencyCode(country.currencies);
+          const exchangeUrl = `https://api.api-ninjas.com/v1/convertcurrency?have=${currencyCode}&want=USD&amount=1`;
+          fetch(exchangeUrl)
+            .then(response => response.json())
+            .then(data => {
+              const exchangeRate = data.new_amount;
+              const currencyDisplay = `${currencyCode} (${exchangeRate.toFixed(2)} USD)`;
+              countryCard.innerHTML = `
+                <span class ="flag-coat">
+                  <img src="https://flagcdn.com/h120/${getCountryCode(country)}.png" height="120" width="190" alt="${country.name.common} Flag">
+                  <img src="https://mainfacts.com/media/images/coats_of_arms/${getCountryCode(country)}.svg" alt="${country.name.common} Coat">
+                </span>
+                <h2>${country.name.common}</h2>
+                <p><strong>Capital:</strong> ${country.capital}</p>
+                <p><strong>Language:</strong> ${country.languages[Object.keys(country.languages)[0]]}</p>
+                <p><strong>Currency:</strong> ${currencyDisplay}</p>
+                <p><strong>GDP:</strong> $${(gdp / 1000).toFixed(2)}b <i class="fas fa-dollar-sign"></i></p>
+                <p><strong>GDP Per Capita:</strong> $${gdpPerCapita} <i class="fas fa-dollar-sign"></i></p>
+                <p><strong>GDP Growth:</strong> <span class="gdp-growth ${gdpGrowth > 0 ? 'positive' : 'negative'}">${gdpGrowth}% ${gdpGrowth > 0 ? '&#8593;' : '&#8595;'}</span></p>
+                <p><strong>Population:</strong> ${country.population.toLocaleString()}</p>
+                <p><strong>Territory:</strong> ${territory} km<sup>2</sup></p>
+                <p><strong>Region:</strong> ${country.region}/${country.subregion}</p>
+                <p><strong>Neighboring Countries:</strong> ${getNeighboringCountries(country)}</p>
+                <span id="expand-icon-less" class="material-symbols-outlined">expand_less</span>`;
+              const expandIcon = document.getElementById('expand-icon-less');
+              expandIcon.addEventListener('click', function () {
+                hideCountryInfo();
+                showCountryInfo(row, country);
+              });
+            })
+            .catch(error => {
+              console.log('Error:', error);
+              countryCard.innerHTML = 'Failed to fetch country information.';
+            });
+        }
         document.body.appendChild(countryCard);
         openCountryRow = {
           rowElement: null,
@@ -416,6 +423,18 @@
             hideCountryInfo();
             showExpandedCountryInfo(row, country);
           });
+        }
+      }
+
+      function hideCountryInfo() {
+        if (openCountryRow) {
+          if (openCountryRow.rowElement) {
+            openCountryRow.rowElement.classList.remove('selected');
+          }
+          if (openCountryRow.countryCard) {
+            document.body.removeChild(openCountryRow.countryCard);
+          }
+          openCountryRow = null;
         }
       }
 
