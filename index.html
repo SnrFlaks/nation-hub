@@ -3,14 +3,14 @@
 
 <head>
   <title>NationHub</title>
+  <link rel="icon" type="image/png" href="/favicon-32x32.png">
   <link rel="stylesheet"
     href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@48,400,0,0" />
   <style>
     table {
       border-collapse: collapse;
-      width: 25%;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
-      border-radius: 10px;
+      width: 100%;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
     }
 
     table th,
@@ -18,13 +18,24 @@
       text-align: left;
       overflow: hidden;
       padding: 7px;
-      border-bottom: 1px solid #ddd;
     }
 
     table tr:first-child {
       background-color: #525252;
       color: white;
-      border-radius: 10px 10px 0 0;
+    }
+
+    table tr:not(:first-child):hover {
+      background-color: #c0c0c0;
+      cursor: pointer;
+    }
+
+    table tr:first-of-type th:first-child {
+      border-top-left-radius: 6px;
+    }
+
+    table tr:first-of-type th:last-child {
+      border-top-right-radius: 6px;
     }
 
     table tr:nth-child(even) {
@@ -37,6 +48,33 @@
 
     .table-container {
       margin-left: 5%;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+      border-radius: 10px;
+      border: 2px solid #333;
+      width: 25%;
+    }
+
+    body {
+      font-family: 'Roboto Mono', monospace;
+    }
+
+    h1 {
+      display: flex;
+      align-items: center;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+      background-color: #f2f2f2;
+      border-radius: 10px;
+      border: 2px solid #333;
+    }
+
+    .earth {
+      color: rgb(28, 155, 11);
+      font-size: 48px;
+      margin-right: 5px;
+    }
+
+    .header {
+      font-size: 36px;
     }
 
     .country-card {
@@ -47,7 +85,7 @@
       z-index: 999;
       background-color: #f2f2f2;
       padding: 20px;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
       border-radius: 10px;
       border: 2px solid #333;
     }
@@ -83,11 +121,23 @@
     }
 
     .flag-column {
-      width: 5cm;
+      width: 5%;
     }
 
     .country-column {
       width: 90%;
+    }
+
+    .country-column::after {
+      content: '';
+      display: inline-block;
+      height: 100%;
+      vertical-align: middle;
+    }
+
+    .country-column span {
+      display: inline-block;
+      vertical-align: middle;
     }
 
     .region-column {
@@ -96,6 +146,7 @@
 
     .sort-button {
       border: none;
+      color: white;
       background: none;
       padding: 0;
       cursor: pointer;
@@ -107,18 +158,82 @@
       background-repeat: no-repeat;
       background-position: center;
     }
+
+    .sort-icon {
+      transform: rotate(270deg);
+    }
+
+    #expand-icon,
+    #expand-icon-less {
+      cursor: pointer;
+    }
+
+    .flag-coat {
+      display: flex;
+      align-items: center;
+    }
+
+    .flag-coat img {
+      height: 120px;
+    }
+
+    .flag-coat img:first-child {
+      margin-right: 10px;
+    }
+
+    .flag-coat img:last-child {
+      margin-left: 10px;
+    }
+
+    .gdp-growth {
+      font-weight: bold;
+    }
+
+    .gdp-growth.positive {
+      color: green;
+    }
+
+    .gdp-growth.negative {
+      color: red;
+    }
+
+    .loader {
+      display: inline-block;
+      width: 30px;
+      height: 30px;
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #525252;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% {
+        transform: rotate(0deg);
+      }
+
+      100% {
+        transform: rotate(360deg);
+      }
+    }
   </style>
 </head>
 
 <body>
-  <h1>Country List</h1>
+  <h1>
+    <span class="material-symbols-outlined earth">public</span>
+    <span class="header">NationHub</span>
+  </h1>
   <div class="table-container">
-    <button class="sort-button" onclick="sortTable()"><span id="sort-symbol"
-        class="material-symbols-outlined">sort_by_alpha</span></button>
     <table id="countries-table">
       <tr>
         <th class="flag-column"></th>
-        <th class="country-column">Country</th>
+        <th class="country-column">
+          <span>Country</span>
+          <button class="sort-button" onclick="sortTable()">
+            <span id="sort-symbol" class="material-symbols-outlined sort-icon">switch_right</span>
+          </button>
+        </th>
         <th class="region-column">Region</th>
       </tr>
     </table>
@@ -138,14 +253,8 @@
         fetch('https://restcountries.com/v3.1/all')
           .then(response => response.json())
           .then(data => {
-            independentCountries = data.filter(country => {
-              return country.independent;
-            });
-            independentCountries.sort((a, b) => {
-              const nameA = a.name.common.toLowerCase();
-              const nameB = b.name.common.toLowerCase();
-              return nameA.localeCompare(nameB);
-            });
+            independentCountries = data.filter(country => country.independent);
+            independentCountries.sort((a, b) => a.name.common.localeCompare(b.name.common));
             totalPages = Math.ceil(independentCountries.length / countriesPerPage);
             currentPage = 1;
             renderPagination(totalPages);
@@ -153,20 +262,16 @@
               renderCountriesTable(independentCountries, currentPage);
             }
           })
-          .catch(error => {
-            console.log('Error:', error);
-          });
+          .catch(error => console.log('Error:', error));
       }
 
       function renderPagination(totalPages) {
-        const paginationContainer = document.querySelector('.pagination');
+        const paginationContainer = document.querySelector('.pagination-container');
         paginationContainer.innerHTML = '';
         for (let i = 1; i <= totalPages; i++) {
           const button = document.createElement('button');
           button.textContent = i;
-          button.addEventListener('click', function () {
-            setCurrentPage(i);
-          });
+          button.addEventListener('click', () => setCurrentPage(i));
           if (i === currentPage) {
             button.classList.add('active');
           }
@@ -179,35 +284,25 @@
         const endIndex = startIndex + countriesPerPage;
         const countriesToRender = countries.slice(startIndex, endIndex);
         const countriesTable = document.getElementById('countries-table');
-        countriesTable.innerHTML = '';
-        const tableHeaderRow = document.createElement('tr');
-        const countryHeader = document.createElement('th');
-        const regionHeader = document.createElement('th');
-        countryHeader.textContent = 'Country';
-        regionHeader.textContent = 'Region';
-        tableHeaderRow.appendChild(document.createElement('th'));
-        tableHeaderRow.appendChild(countryHeader);
-        tableHeaderRow.appendChild(regionHeader);
-        countriesTable.appendChild(tableHeaderRow);
+        countriesTable.innerHTML = `
+          <tr>
+            <th class="flag-column"></th>
+            <th class="country-column">
+              <span>Country</span>
+              <button class="sort-button" onclick="sortTable()">
+                <span id="sort-symbol" class="material-symbols-outlined sort-icon">switch_right</span>
+              </button>
+            </th>
+            <th class="region-column">Region</th>
+          </tr>`;
         countriesToRender.forEach(country => {
           const countryName = country.name.common;
           const countryRegion = country.region || 'N/A';
           const row = document.createElement('tr');
-          const flagCell = document.createElement('td');
-          flagCell.classList.add('flag-column');
-          const nameCell = document.createElement('td');
-          nameCell.classList.add('country-column');
-          const regionCell = document.createElement('td');
-          regionCell.classList.add('region-column');
-          const flagImg = document.createElement('img');
-          flagImg.src = `https://flagcdn.com/24x18/${getCountryCode(country)}.png`;
-          flagImg.alt = `${countryName} Flag`;
-          flagCell.appendChild(flagImg);
-          nameCell.textContent = countryName;
-          regionCell.textContent = countryRegion;
-          row.appendChild(flagCell);
-          row.appendChild(nameCell);
-          row.appendChild(regionCell);
+          row.innerHTML = `
+            <td><img src="https://flagcdn.com/24x18/${getCountryCode(country)}.png" alt="${countryName} Flag"></td>
+            <td>${countryName}</td>
+            <td>${countryRegion}</td>`;
           row.addEventListener('click', function () {
             showCountryInfo(row, country);
           });
@@ -221,39 +316,124 @@
         renderCountriesTable(independentCountries, currentPage);
       }
 
-
       let openCountryRow = null;
 
-      function showCountryInfo(row, country) {
+      function hideCountryInfo() {
+        if (openCountryRow) {
+          if (openCountryRow.rowElement) {
+            openCountryRow.rowElement.classList.remove('selected');
+          }
+          if (openCountryRow.countryCard) {
+            document.body.removeChild(openCountryRow.countryCard);
+          }
+          openCountryRow = null;
+        }
+      }
+
+      function showExpandedCountryInfo(row, country) {
         const countryCard = document.createElement('div');
         countryCard.classList.add('country-card');
-        countryCard.innerHTML = `
-        <img src="https://flagcdn.com/h120/${getCountryCode(country)}.png" height="120" width="190" alt="${country.name.common} Flag">
-        <h2>${country.name.common}</h2>
-        <p><strong>Capital:</strong> ${country.capital}</p>
-        <p><strong>Language:</strong> ${country.languages[Object.keys(country.languages)[0]]}</p>
-        <p><strong>Currency:</strong> ${getCurrency(country.currencies)}</p>
-        <p><strong>Population:</strong> ${country.population.toLocaleString()}</p>`;
-        if (openCountryRow) {
-          openCountryRow.rowElement.classList.remove('selected');
-          document.body.removeChild(openCountryRow.countryCard);
-        }
-        if (row !== openCountryRow) {
+        countryCard.innerHTML = '<div class="loader"></div>';
+        const apiUrl = `https://api.api-ninjas.com/v1/country?name=${getCountryCode(country)}`;
+        fetch(apiUrl, {
+          headers: {
+            'X-Api-Key': 'W+OQ/iBAPzIQYLIRvdQgVQ==ixnCBWtlJHxmXrMv'
+          }
+        })
+          .then(response => response.json())
+          .then(data => {
+            const countryData = data[0];
+            const gdp = countryData.gdp || 'N/A';
+            const gdpGrowth = countryData.gdp_growth || 'N/A';
+            const territory = countryData.surface_area || 'N/A';
+            const currencyCode = getCurrencyCode(country.currencies);
+            const exchangeUrl = `https://api.api-ninjas.com/v1/convertcurrency?have=${currencyCode}&want=USD&amount=1`;
+            fetch(exchangeUrl)
+              .then(response => response.json())
+              .then(data => {
+                const exchangeRate = data.new_amount;
+                const currencyDisplay = `${currencyCode} (${exchangeRate.toFixed(2)} USD)`;
+                countryCard.innerHTML = `
+                  <span class ="flag-coat">
+                    <img src="https://flagcdn.com/h120/${getCountryCode(country)}.png" height="120" width="190" alt="${country.name.common} Flag">
+                    <img src="https://mainfacts.com/media/images/coats_of_arms/${getCountryCode(country)}.svg" alt="${country.name.common} Coat">
+                  </span>
+                  <h2>${country.name.common}</h2>
+                  <p><strong>Capital:</strong> ${country.capital}</p>
+                  <p><strong>Language:</strong> ${country.languages[Object.keys(country.languages)[0]]}</p>
+                  <p><strong>Currency:</strong> ${currencyDisplay}</p>
+                  <p><strong>GDP:</strong> $${(gdp / 1000).toFixed(2)}b <i class="fas fa-dollar-sign"></i></p>
+                  <p><strong>GDP Growth:</strong> <span class="gdp-growth ${gdpGrowth > 0 ? 'positive' : 'negative'}">${gdpGrowth}% ${gdpGrowth > 0 ? '&#8593;' : '&#8595;'}</span></p>
+                  <p><strong>Population:</strong> ${country.population.toLocaleString()}</p>
+                  <p><strong>Territory:</strong> ${territory} km<sup>2</sup></p>
+                  <p><strong>Region:</strong> ${country.region}/${country.subregion}</p>
+                  <p><strong>Neighboring Countries:</strong> ${getNeighboringCountries(country)}</p>
+                  <span id="expand-icon-less" class="material-symbols-outlined">expand_less</span>`;
+                const expandIcon = document.getElementById('expand-icon-less');
+                expandIcon.addEventListener('click', function () {
+                  hideCountryInfo();
+                  showCountryInfo(row, country);
+                });
+              })
+              .catch(error => {
+                console.log('Error:', error);
+                countryCard.innerHTML = 'Failed to fetch country information.';
+              });
+          })
+          .catch(error => {
+            console.log('Error:', error);
+            countryCard.innerHTML = 'Failed to fetch country information.';
+          });
+        document.body.appendChild(countryCard);
+        openCountryRow = {
+          rowElement: null,
+          countryCard: countryCard
+        };
+      }
+
+      function showCountryInfo(row, country) {
+        if (openCountryRow && openCountryRow.rowElement === row) {
+          hideCountryInfo();
+        } else {
+          hideCountryInfo();
+          const countryCard = document.createElement('div');
+          countryCard.classList.add('country-card');
+          countryCard.innerHTML = `
+            <img src="https://flagcdn.com/h120/${getCountryCode(country)}.png" height="120" width="190" alt="${country.name.common} Flag">
+            <h2>${country.name.common}</h2>
+            <p><strong>Capital:</strong> ${country.capital}</p>
+            <p><strong>Language:</strong> ${country.languages[Object.keys(country.languages)[0]]}</p>
+            <p><strong>Population:</strong> ${country.population.toLocaleString()}</p>
+            <span id="expand-icon" class="material-symbols-outlined">expand_more</span>`;
           row.classList.add('selected');
           document.body.appendChild(countryCard);
           openCountryRow = {
             rowElement: row,
             countryCard: countryCard
           };
-        } else {
-          openCountryRow = null;
+          const expandIcon = document.getElementById('expand-icon');
+          expandIcon.addEventListener('click', function () {
+            hideCountryInfo();
+            showExpandedCountryInfo(row, country);
+          });
         }
       }
 
+      function getNeighboringCountries(country) {
+        if (country.borders && country.borders.length > 0) {
+          const neighboringCountries = country.borders
+            .map(border => {
+              const neighboringCountry = independentCountries.find(c => c.cca3 === border);
+              return neighboringCountry ? neighboringCountry.name.common : '';
+            })
+            .filter(Boolean);
+          return neighboringCountries.join(', ');
+        }
+        return 'N/A';
+      }
+
       function getCountryCode(country) {
-        const alpha2Code = country.cca2;
-        const alpha3Code = country.cca3;
-        return alpha2Code ? alpha2Code.toLowerCase() : alpha3Code.toLowerCase();
+        return (country.cca2 || country.cca3).toLowerCase();
       }
 
       function getCurrency(currencies) {
@@ -266,32 +446,35 @@
         return 'N/A';
       }
 
+      function getCurrencyCode(currencies) {
+        const currencyKeys = Object.keys(currencies);
+        if (currencyKeys.length > 0) {
+          const currencyCode = currencyKeys[0];
+          return `${currencyCode}`;
+        }
+        return 'N/A';
+      }
+
       function sortTable() {
-        const countriesTable = document.getElementById('countries-table');
-        const rows = Array.from(countriesTable.rows).slice(1);
-        rows.sort((a, b) => {
-          const nameA = a.cells[1].textContent.toLowerCase();
-          const nameB = b.cells[1].textContent.toLowerCase();
-          if (sortOrder === 'asc') {
-            return nameA.localeCompare(nameB);
-          } else {
-            return nameB.localeCompare(nameA);
-          }
-        });
-        rows.forEach(row => {
-          countriesTable.appendChild(row);
-        });
         toggleSortOrder();
+        independentCountries.reverse();
+        renderCountriesTable(independentCountries, currentPage);
         updateSortButton();
       }
+
       function toggleSortOrder() {
         sortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
+        const sortSymbol = document.getElementById('sort-symbol');
+        sortSymbol.style.transform = `rotate(${sortOrder === 'asc' ? '90deg' : '270deg'})`;
       }
+
       function updateSortButton() {
-        const sortButton = document.getElementById('sort-button');
-        /*sortButton.textContent = sortOrder === 'asc' ? 'A-Z' : 'Z-A';*/
+        const sortSymbol = document.getElementById('sort-symbol');
+        sortSymbol.style.transform = `rotate(${sortOrder === 'asc' ? '90deg' : '270deg'})`;
+        const sortButton = document.querySelector('.sort-button');
         sortButton.dataset.sortOrder = sortOrder;
       }
+
       document.addEventListener('DOMContentLoaded', function () {
         toggleSortOrder();
         fetchCountries();
