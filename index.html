@@ -3,31 +3,42 @@
 
 <head>
   <title>NationHub</title>
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@48,400,0,0" />
   <style>
     table {
       border-collapse: collapse;
-      width: 45%;
+      width: 25%;
       box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
       border-radius: 10px;
     }
-  
+
     table th,
     table td {
       text-align: left;
-      padding: 8px;
+      overflow: hidden;
+      padding: 7px;
       border-bottom: 1px solid #ddd;
     }
-  
+
     table tr:first-child {
       background-color: #525252;
       color: white;
       border-radius: 10px 10px 0 0;
     }
-  
+
     table tr:nth-child(even) {
       background-color: #f2f2f2;
     }
-  
+
+    table tr.selected {
+      background-color: #c0c0c0;
+    }
+
+    .table-container {
+      margin-left: 5%;
+    }
+
     .country-card {
       position: fixed;
       top: 50%;
@@ -40,151 +51,256 @@
       border-radius: 10px;
       border: 2px solid #333;
     }
-  
+
     .country-card h2 {
       margin-top: 0;
+    }
+
+    .pagination {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    .pagination-container {
+      display: flex;
+      justify-content: center;
+    }
+
+    .pagination button {
+      margin: 0 5px;
+      padding: 5px 10px;
+      background-color: #f2f2f2;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .pagination button.active {
+      background-color: #525252;
+      color: white;
+    }
+
+    .flag-column {
+      width: 5cm;
+    }
+
+    .country-column {
+      width: 90%;
+    }
+
+    .region-column {
+      width: 5%;
+    }
+
+    .sort-button {
+      border: none;
+      background: none;
+      padding: 0;
+      cursor: pointer;
+    }
+
+    .sort-button span {
+      display: inline-block;
+      overflow: hidden;
+      background-repeat: no-repeat;
+      background-position: center;
     }
   </style>
 </head>
 
 <body>
   <h1>Country List</h1>
+  <div class="table-container">
+    <button class="sort-button" onclick="sortTable()"><span id="sort-symbol"
+        class="material-symbols-outlined">sort_by_alpha</span></button>
+    <table id="countries-table">
+      <tr>
+        <th class="flag-column"></th>
+        <th class="country-column">Country</th>
+        <th class="region-column">Region</th>
+      </tr>
+    </table>
 
-  <button id="sort-button" onclick="sortTable()">A-Z</button>
+    <div class="pagination">
+      <div class="pagination-container"></div>
+    </div>
 
-  <table id="countries-table">
-    <tr>
-      <th class="flag-column"></th>
-      <th>Country</th>
-      <th>Region</th>
-    </tr>
-  </table>
+    <script>
+      let sortOrder = 'asc';
+      let currentPage = 1;
+      let totalPages = 1;
+      let independentCountries = [];
+      let countriesPerPage = 20;
 
-  <script>
-    let sortOrder = 'asc';
-
-    function fetchCountries() {
-      fetch('https://restcountries.com/v3.1/all')
-        .then(response => response.json())
-        .then(data => {
-          const independentCountries = data.filter(country => {
-            return country.independent;
+      function fetchCountries() {
+        fetch('https://restcountries.com/v3.1/all')
+          .then(response => response.json())
+          .then(data => {
+            independentCountries = data.filter(country => {
+              return country.independent;
+            });
+            independentCountries.sort((a, b) => {
+              const nameA = a.name.common.toLowerCase();
+              const nameB = b.name.common.toLowerCase();
+              return nameA.localeCompare(nameB);
+            });
+            totalPages = Math.ceil(independentCountries.length / countriesPerPage);
+            currentPage = 1;
+            renderPagination(totalPages);
+            if (currentPage === 1) {
+              renderCountriesTable(independentCountries, currentPage);
+            }
+          })
+          .catch(error => {
+            console.log('Error:', error);
           });
-
-          independentCountries.sort((a, b) => {
-            const nameA = a.name.common.toLowerCase();
-            const nameB = b.name.common.toLowerCase();
-            return nameA.localeCompare(nameB);
-          });
-
-          const countriesTable = document.getElementById('countries-table');
-          independentCountries.forEach(country => {
-            const countryName = country.name.common;
-            const countryRegion = country.region || 'N/A';
-            const row = document.createElement('tr');
-            const flagCell = document.createElement('td');
-            const nameCell = document.createElement('td');
-            const regionCell = document.createElement('td');
-            const flagImg = document.createElement('img');
-            flagImg.src = `https://flagcdn.com/24x18/${getCountryCode(country)}.png`;
-            flagImg.alt = `${countryName} Flag`;
-            flagCell.appendChild(flagImg);
-            nameCell.textContent = countryName;
-            regionCell.textContent = countryRegion;
-            row.appendChild(flagCell);
-            row.appendChild(nameCell);
-            row.appendChild(regionCell);
-            row.onclick = function () {
-              showCountryInfo(row, country);
-            };
-            countriesTable.appendChild(row);
-          });
-        })
-        .catch(error => {
-          console.log('Error:', error);
-        });
-    }
-
-    let openCountryRow = null;
-
-    function showCountryInfo(row, country) {
-      const countryCard = document.createElement('div');
-      countryCard.classList.add('country-card');
-      countryCard.innerHTML = `
-      <img src="https://flagcdn.com/h120/${getCountryCode(country)}.png" height="120" width="190" alt="${country.name.common} Flag">
-      <h2>${country.name.common}</h2>
-      <p><strong>Capital:</strong> ${country.capital}</p>
-      <p><strong>Language:</strong> ${country.languages[Object.keys(country.languages)[0]]}</p>
-      <p><strong>Currency:</strong> ${getCurrency(country.currencies)}</p>
-      <p><strong>Population:</strong> ${country.population.toLocaleString()}</p>`;
-
-      if (openCountryRow) {
-        openCountryRow.classList.remove('selected');
-        document.body.removeChild(openCountryRow);
       }
 
-      if (row !== openCountryRow) {
-        row.classList.add('selected');
-        document.body.appendChild(countryCard);
-        openCountryRow = countryCard;
-      } else {
-        openCountryRow = null;
-      }
-    }
-
-    function getCountryCode(country) {
-      const alpha2Code = country.cca2;
-      const alpha3Code = country.cca3;
-      return alpha2Code ? alpha2Code.toLowerCase() : alpha3Code.toLowerCase();
-    }
-
-    function getCurrency(currencies) {
-      const currencyKeys = Object.keys(currencies);
-      if (currencyKeys.length > 0) {
-        const currencyCode = currencyKeys[0];
-        const currency = currencies[currencyCode];
-        return `${currency.name} (${currencyCode})`;
-      }
-      return 'N/A';
-    }
-
-    function sortTable() {
-      const countriesTable = document.getElementById('countries-table');
-      const rows = Array.from(countriesTable.rows).slice(1);
-      rows.sort((a, b) => {
-        const nameA = a.cells[1].textContent.toLowerCase();
-        const nameB = b.cells[1].textContent.toLowerCase();
-        if (sortOrder === 'asc') {
-          return nameA.localeCompare(nameB);
-        } else {
-          return nameB.localeCompare(nameA);
+      function renderPagination(totalPages) {
+        const paginationContainer = document.querySelector('.pagination');
+        paginationContainer.innerHTML = '';
+        for (let i = 1; i <= totalPages; i++) {
+          const button = document.createElement('button');
+          button.textContent = i;
+          button.addEventListener('click', function () {
+            setCurrentPage(i);
+          });
+          if (i === currentPage) {
+            button.classList.add('active');
+          }
+          paginationContainer.appendChild(button);
         }
+      }
+
+      function renderCountriesTable(countries, currentPage) {
+        const startIndex = (currentPage - 1) * countriesPerPage;
+        const endIndex = startIndex + countriesPerPage;
+        const countriesToRender = countries.slice(startIndex, endIndex);
+        const countriesTable = document.getElementById('countries-table');
+        countriesTable.innerHTML = '';
+        const tableHeaderRow = document.createElement('tr');
+        const countryHeader = document.createElement('th');
+        const regionHeader = document.createElement('th');
+        countryHeader.textContent = 'Country';
+        regionHeader.textContent = 'Region';
+        tableHeaderRow.appendChild(document.createElement('th'));
+        tableHeaderRow.appendChild(countryHeader);
+        tableHeaderRow.appendChild(regionHeader);
+        countriesTable.appendChild(tableHeaderRow);
+        countriesToRender.forEach(country => {
+          const countryName = country.name.common;
+          const countryRegion = country.region || 'N/A';
+          const row = document.createElement('tr');
+          const flagCell = document.createElement('td');
+          flagCell.classList.add('flag-column');
+          const nameCell = document.createElement('td');
+          nameCell.classList.add('country-column');
+          const regionCell = document.createElement('td');
+          regionCell.classList.add('region-column');
+          const flagImg = document.createElement('img');
+          flagImg.src = `https://flagcdn.com/24x18/${getCountryCode(country)}.png`;
+          flagImg.alt = `${countryName} Flag`;
+          flagCell.appendChild(flagImg);
+          nameCell.textContent = countryName;
+          regionCell.textContent = countryRegion;
+          row.appendChild(flagCell);
+          row.appendChild(nameCell);
+          row.appendChild(regionCell);
+          row.addEventListener('click', function () {
+            showCountryInfo(row, country);
+          });
+          countriesTable.appendChild(row);
+        });
+      }
+
+      function setCurrentPage(page) {
+        currentPage = page;
+        renderPagination(totalPages);
+        renderCountriesTable(independentCountries, currentPage);
+      }
+
+
+      let openCountryRow = null;
+
+      function showCountryInfo(row, country) {
+        const countryCard = document.createElement('div');
+        countryCard.classList.add('country-card');
+        countryCard.innerHTML = `
+        <img src="https://flagcdn.com/h120/${getCountryCode(country)}.png" height="120" width="190" alt="${country.name.common} Flag">
+        <h2>${country.name.common}</h2>
+        <p><strong>Capital:</strong> ${country.capital}</p>
+        <p><strong>Language:</strong> ${country.languages[Object.keys(country.languages)[0]]}</p>
+        <p><strong>Currency:</strong> ${getCurrency(country.currencies)}</p>
+        <p><strong>Population:</strong> ${country.population.toLocaleString()}</p>`;
+        if (openCountryRow) {
+          openCountryRow.rowElement.classList.remove('selected');
+          document.body.removeChild(openCountryRow.countryCard);
+        }
+        if (row !== openCountryRow) {
+          row.classList.add('selected');
+          document.body.appendChild(countryCard);
+          openCountryRow = {
+            rowElement: row,
+            countryCard: countryCard
+          };
+        } else {
+          openCountryRow = null;
+        }
+      }
+
+      function getCountryCode(country) {
+        const alpha2Code = country.cca2;
+        const alpha3Code = country.cca3;
+        return alpha2Code ? alpha2Code.toLowerCase() : alpha3Code.toLowerCase();
+      }
+
+      function getCurrency(currencies) {
+        const currencyKeys = Object.keys(currencies);
+        if (currencyKeys.length > 0) {
+          const currencyCode = currencyKeys[0];
+          const currency = currencies[currencyCode];
+          return `${currency.name} (${currencyCode})`;
+        }
+        return 'N/A';
+      }
+
+      function sortTable() {
+        const countriesTable = document.getElementById('countries-table');
+        const rows = Array.from(countriesTable.rows).slice(1);
+        rows.sort((a, b) => {
+          const nameA = a.cells[1].textContent.toLowerCase();
+          const nameB = b.cells[1].textContent.toLowerCase();
+          if (sortOrder === 'asc') {
+            return nameA.localeCompare(nameB);
+          } else {
+            return nameB.localeCompare(nameA);
+          }
+        });
+        rows.forEach(row => {
+          countriesTable.appendChild(row);
+        });
+        toggleSortOrder();
+        updateSortButton();
+      }
+      function toggleSortOrder() {
+        sortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
+      }
+      function updateSortButton() {
+        const sortButton = document.getElementById('sort-button');
+        /*sortButton.textContent = sortOrder === 'asc' ? 'A-Z' : 'Z-A';*/
+        sortButton.dataset.sortOrder = sortOrder;
+      }
+      document.addEventListener('DOMContentLoaded', function () {
+        toggleSortOrder();
+        fetchCountries();
+        updateSortButton();
       });
-      rows.forEach(row => {
-        countriesTable.appendChild(row);
-      });
-      toggleSortOrder();
+
       updateSortButton();
-    }
-
-    function toggleSortOrder() {
-      sortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
-    }
-
-    function updateSortButton() {
-      const sortButton = document.getElementById('sort-button');
-      sortButton.textContent = sortOrder === 'asc' ? 'A-Z' : 'Z-A';
-      sortButton.dataset.sortOrder = sortOrder;
-    }
-
-    document.addEventListener('DOMContentLoaded', function () {
-      toggleSortOrder();
-      fetchCountries();
-      updateSortButton();
-    });
-
-    updateSortButton();
-  </script>
+    </script>
+  </div>
 </body>
 
 </html>
