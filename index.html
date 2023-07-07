@@ -35,12 +35,20 @@
       transform: scale(1.1);
     }
 
-    table tr:first-of-type th:first-child {
+    table tr:first-child th:first-child {
       border-top-left-radius: 6px;
     }
 
-    table tr:first-of-type th:last-child {
+    table tr:first-child th:last-child {
       border-top-right-radius: 6px;
+    }
+
+    table tr:last-child td:first-child {
+      border-bottom-left-radius: 10px;
+    }
+
+    table tr:last-child td:last-child {
+      border-bottom-right-radius: 10px;
     }
 
     table tr:not(:first-child):nth-child(odd) {
@@ -71,16 +79,19 @@
       background-color: #f2f2f2;
       border-radius: 10px;
       border: 2px solid #333;
+
     }
 
     .earth {
       color: rgb(28, 155, 11);
       font-size: 48px;
       margin-right: 5px;
+      cursor: pointer;
     }
 
     .header {
       font-size: 36px;
+      cursor: pointer;
     }
 
     .country-card {
@@ -98,6 +109,10 @@
 
     .country-card h2 {
       margin-top: 0;
+    }
+
+    .neighboring-country-icon {
+      cursor: pointer;
     }
 
     .pagination {
@@ -184,11 +199,14 @@
     }
 
     .flag-coat img:first-child {
-      margin-right: 10px;
+      margin-right: 50px;
     }
 
-    .flag-coat img:last-child {
-      margin-left: 10px;
+    .close-icon {
+      position: absolute;
+      top: 1px;
+      right: 1px;
+      cursor: pointer;
     }
 
     .gdp-growth {
@@ -222,13 +240,30 @@
         transform: rotate(360deg);
       }
     }
+
+    @media (min-height: calc(100vw + 400px)) {
+      .table-container {
+        width: calc(100% - 10%);
+      }
+
+      body {
+        font-size: 36px;
+      }
+
+      .country-card {
+        top: auto;
+        bottom: 15%;
+        left: 50%;
+        transform: translateX(-50%);
+      }
+    }
   </style>
 </head>
 
 <body>
   <h1>
-    <span class="material-symbols-outlined earth">public</span>
-    <span class="header">NationHub</span>
+    <span class="material-symbols-outlined earth" onclick="location.reload()">public</span>
+    <span class="header" onclick="location.reload()">NationHub</span>
   </h1>
   <div class="table-container">
     <table id="countries-table">
@@ -253,7 +288,28 @@
       let currentPage = 1;
       let totalPages = 1;
       let independentCountries = [];
-      let countriesPerPage = 20;
+      let countriesPerPage = calculateCountriesPerPage();
+      function calculateCountriesPerPage() {
+        const h1Element = document.querySelector('h1');
+        const paginationElement = document.querySelector('.pagination');
+        const h1Rect = h1Element.getBoundingClientRect();
+        const paginationRect = paginationElement.getBoundingClientRect();
+        const distanceToButtons = paginationRect.top - (h1Rect.top + h1Rect.height);
+        const heightDifference = window.innerHeight - window.innerWidth;
+        if (heightDifference >= 400) {
+          const screenHeight = window.innerHeight;
+          const distanceToCenter = screenHeight / 2 - (h1Rect.top + h1Rect.height);
+          return Math.floor(distanceToCenter / 58);
+        } else {
+          return Math.floor(distanceToButtons / 42.65);
+        }
+      }
+
+      window.addEventListener('resize', function () {
+        countriesPerPage = calculateCountriesPerPage();
+        renderCountriesTable(independentCountries, currentPage);
+        renderPagination(Math.ceil(independentCountries.length / countriesPerPage))
+      });
 
       function fetchCountries() {
         fetch('https://restcountries.com/v3.1/all')
@@ -287,8 +343,6 @@
 
       function renderCountriesTable(countries, currentPage) {
         const startIndex = (currentPage - 1) * countriesPerPage;
-        const endIndex = startIndex + countriesPerPage;
-        const countriesToRender = countries.slice(startIndex, endIndex);
         const countriesTable = document.getElementById('countries-table');
         countriesTable.innerHTML = `
           <tr>
@@ -301,7 +355,7 @@
             </th>
             <th class="region-column">Region</th>
           </tr>`;
-        countriesToRender.forEach(country => {
+        countries.slice(startIndex, startIndex + countriesPerPage).forEach(country => {
           const countryName = country.name.common;
           const countryRegion = country.region || 'N/A';
           const row = document.createElement('tr');
@@ -309,9 +363,7 @@
             <td><img src="https://flagcdn.com/24x18/${getCountryCode(country)}.png" alt="${countryName} Flag"></td>
             <td>${countryName}</td>
             <td>${countryRegion}</td>`;
-          row.addEventListener('click', function () {
-            showCountryInfo(row, country);
-          });
+          row.addEventListener('click', () => showCountryInfo(row, country));
           countriesTable.appendChild(row);
         });
       }
@@ -329,7 +381,7 @@
         countryCard.classList.add('country-card');
         countryCard.innerHTML = '<div class="loader"></div>';
         const apiUrl = `https://api.api-ninjas.com/v1/country?name=${getCountryCode(country)}`;
-        const cachedData = localStorage.getItem(apiUrl); // Проверяем наличие кэшированных данных
+        const cachedData = localStorage.getItem(apiUrl);
         if (cachedData) {
           const data = JSON.parse(cachedData);
           renderCountryInfo(data);
@@ -344,10 +396,7 @@
               renderCountryInfo(data);
               localStorage.setItem(apiUrl, JSON.stringify(data));
             })
-            .catch(error => {
-              console.log('Error:', error);
-              countryCard.innerHTML = 'Failed to fetch country information.';
-            });
+            .catch(error => handleError(error, countryCard));
         }
 
         function renderCountryInfo(data) {
@@ -368,6 +417,7 @@
                   <img src="https://flagcdn.com/h120/${getCountryCode(country)}.png" height="120" width="190" alt="${country.name.common} Flag">
                   <img src="https://mainfacts.com/media/images/coats_of_arms/${getCountryCode(country)}.svg" alt="${country.name.common} Coat">
                 </span>
+                <span class="material-symbols-outlined close-icon">close</span>
                 <h2>${country.name.common}</h2>
                 <p><strong>Capital:</strong> ${country.capital}</p>
                 <p><strong>Language:</strong> ${country.languages[Object.keys(country.languages)[0]]}</p>
@@ -380,16 +430,15 @@
                 <p><strong>Region:</strong> ${country.region}/${country.subregion}</p>
                 <p><strong>Neighboring Countries:</strong> ${getNeighboringCountries(country)}</p>
                 <span id="expand-icon-less" class="material-symbols-outlined">expand_less</span>`;
+              const closeIcon = countryCard.querySelector('.close-icon');
+              closeIcon?.addEventListener('click', () => hideCountryInfo());
               const expandIcon = document.getElementById('expand-icon-less');
-              expandIcon.addEventListener('click', function () {
+              expandIcon?.addEventListener('click', function () {
                 hideCountryInfo();
                 showCountryInfo(row, country);
               });
             })
-            .catch(error => {
-              console.log('Error:', error);
-              countryCard.innerHTML = 'Failed to fetch country information.';
-            });
+            .catch(error => handleError(error, countryCard));
         }
         document.body.appendChild(countryCard);
         openCountryRow = {
@@ -407,6 +456,7 @@
           countryCard.classList.add('country-card');
           countryCard.innerHTML = `
             <img src="https://flagcdn.com/h120/${getCountryCode(country)}.png" height="120" width="190" alt="${country.name.common} Flag">
+            <span class="material-symbols-outlined close-icon">close</span>
             <h2>${country.name.common}</h2>
             <p><strong>Capital:</strong> ${country.capital}</p>
             <p><strong>Language:</strong> ${country.languages[Object.keys(country.languages)[0]]}</p>
@@ -418,12 +468,39 @@
             rowElement: row,
             countryCard: countryCard
           };
+          const closeIcon = countryCard.querySelector('.close-icon');
+          closeIcon?.addEventListener('click', () => hideCountryInfo());
           const expandIcon = document.getElementById('expand-icon');
-          expandIcon.addEventListener('click', function () {
+          expandIcon?.addEventListener('click', function () {
             hideCountryInfo();
             showExpandedCountryInfo(row, country);
           });
         }
+      }
+
+      function showNeighboringCountry(countryName) {
+        if (!countryName) return;
+        const country = independentCountries.find(c => c.name.common === countryName);
+        let row = getRowOfCountry(country);
+        if (!row) {
+          const countryIndex = independentCountries.findIndex(c => c.name.common === country.name.common);
+          const page = Math.ceil((countryIndex + 1) / countriesPerPage);
+          setCurrentPage(page);
+          row = getRowOfCountry(country);
+        }
+        function getRowOfCountry(country) {
+          const countriesTable = document.getElementById('countries-table');
+          const rows = countriesTable.getElementsByTagName('tr');
+          for (let i = 1; i < rows.length; i++) {
+            const currentRow = rows[i];
+            const countryName = currentRow.getElementsByTagName('td')[1].textContent.trim();
+            if (countryName === country.name.common) {
+              return currentRow;
+            }
+          }
+          return null;
+        }
+        showCountryInfo(row, country);
       }
 
       function hideCountryInfo() {
@@ -443,13 +520,14 @@
           const neighboringCountries = country.borders
             .map(border => {
               const neighboringCountry = independentCountries.find(c => c.cca3 === border);
-              return neighboringCountry ? neighboringCountry.name.common : '';
+              return neighboringCountry ? `<img class="neighboring-country-icon" src="https://flagcdn.com/24x18/${getCountryCode(neighboringCountry)}.png" alt="${neighboringCountry.name.common} Flag" onclick="showNeighboringCountry('${neighboringCountry.name.common}')"> ${neighboringCountry.name.common}` : '';
             })
             .filter(Boolean);
           return neighboringCountries.join(', ');
         }
-        return 'N/A';
+        return "Don't Have";
       }
+
 
       function getCountryCode(country) {
         return (country.cca2 || country.cca3).toLowerCase();
@@ -500,7 +578,10 @@
         updateSortButton();
       });
 
-      updateSortButton();
+      function handleError(error, countryCard) {
+        console.log('Error:', error);
+        countryCard.innerHTML = 'Failed to fetch country information.';
+      }
     </script>
   </div>
 </body>
