@@ -13,6 +13,10 @@
       box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
     }
 
+    .dark-mode table {
+      box-shadow: 0 0 25px rgba(255, 255, 255, 0.2);
+    }
+
     table th,
     table td {
       text-align: left;
@@ -20,9 +24,18 @@
       padding: 7px;
     }
 
+    .dark-mode table td {
+      color: white;
+    }
+
     table tr:first-child {
       background-color: #525252;
       color: white;
+    }
+
+    .dark-mode table tr:first-child {
+      background-color: #cacaca;
+      color: black;
     }
 
     table tr:not(:first-child) {
@@ -55,8 +68,16 @@
       background-color: #f8f8f8;
     }
 
+    .dark-mode tr:not(:first-child):nth-child(odd) {
+      background-color: #585858;
+    }
+
     table tr:nth-child(even) {
       background-color: #e6e6e6;
+    }
+
+    .dark-mode table tr:nth-child(even) {
+      background-color: #474747;
     }
 
     .table-container {
@@ -67,9 +88,18 @@
       width: 25%;
     }
 
+    .dark-mode .table-container {
+      box-shadow: 0 0 25px rgba(255, 255, 255, 0.2);
+      border: 2px solid #f0f0f0;
+    }
+
     body {
       font-family: 'Roboto Mono', monospace;
       background-color: #d1d1d1;
+    }
+
+    body.dark-mode {
+      background-color: #242424;
     }
 
     h1 {
@@ -83,10 +113,19 @@
       z-index: 999;
     }
 
+    .dark-mode h1 {
+      color: white;
+      box-shadow: 0 0 25px rgba(255, 255, 255, 0.2);
+      background-color: #3d3d3d;
+      border: 2px solid #f0f0f0;
+    }
+
     .logo {
       color: rgb(28, 155, 11);
+      filter: drop-shadow(0 0 1rem rgb(28, 155, 11));
       font-size: 48px;
       cursor: pointer;
+      background-color: transparent;
     }
 
     .header {
@@ -100,7 +139,7 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background-color: rgba(0, 0, 0, 0.699);
+      background-color: rgba(0, 0, 0, 0.7);
       z-index: 998;
       display: none;
     }
@@ -111,18 +150,6 @@
       cursor: pointer;
       position: fixed;
       right: 10px;
-    }
-
-    .dark-mode {
-      body {
-        background-color: #242424;
-      }
-    }
-
-    .light-mode {
-      body {
-        background-color: #e6e6e6;
-      }
     }
 
     .settings {
@@ -166,6 +193,13 @@
       font-size: 18px;
     }
 
+    .dark-mode #settings-window {
+      background-color: #3d3d3d;
+      color: white;
+      box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+      border: 2px solid #f0f0f0;
+    }
+
     .country-card {
       position: fixed;
       top: 50%;
@@ -177,6 +211,13 @@
       box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
       border-radius: 10px;
       border: 2px solid #333;
+    }
+
+    .dark-mode .country-card {
+      color: white;
+      background-color: #3d3d3d;
+      box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+      border: 2px solid #f0f0f0;
     }
 
     .country-card h2 {
@@ -216,6 +257,21 @@
       color: white;
     }
 
+    .dark-mode .pagination button {
+      margin: 0 5px;
+      padding: 5px 10px;
+      color: white;
+      background-color: #525252;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .dark-mode .pagination button.active {
+      background-color: #f2f2f2;
+      color: black;
+    }
+
     .flag-column {
       width: 5%;
     }
@@ -246,6 +302,10 @@
       background: none;
       padding: 0;
       cursor: pointer;
+    }
+
+    .dark-mode .sort-button {
+      color: black;
     }
 
     .sort-button span {
@@ -359,9 +419,6 @@
     <span class="material-symbols-outlined settings" onclick="showSettingsWindow()">settings</span>
     <span id="dark-mode-toggle" class="material-symbols-outlined dark-mode-icon"
       onclick="toggleDarkMode()">dark_mode</span>
-    <!-- <span class="material-symbols-outlined">
-      light_mode
-      </span> -->
   </h1>
   <div class="table-container">
     <table id="countries-table">
