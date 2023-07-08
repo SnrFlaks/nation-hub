@@ -79,13 +79,13 @@
       background-color: #f2f2f2;
       border-radius: 10px;
       border: 2px solid #333;
-
+      position: relative;
+      z-index: 999;
     }
 
-    .earth {
+    .logo {
       color: rgb(28, 155, 11);
       font-size: 48px;
-      margin-right: 5px;
       cursor: pointer;
     }
 
@@ -94,12 +94,83 @@
       cursor: pointer;
     }
 
+    .overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.699);
+      z-index: 998;
+      display: none;
+    }
+
+    .dark-mode-icon {
+      font-size: 36px;
+      margin-right: 64px;
+      cursor: pointer;
+      position: fixed;
+      right: 10px;
+    }
+
+    .dark-mode {
+      body {
+        background-color: #242424;
+      }
+    }
+
+    .light-mode {
+      body {
+        background-color: #e6e6e6;
+      }
+    }
+
+    .settings {
+      font-size: 48px;
+      margin-right: 5px;
+      cursor: pointer;
+      position: fixed;
+      right: 10px;
+    }
+
+    .settings-title {
+      margin-top: 1px;
+      font-size: 36px;
+    }
+
+    .toggle-label {
+      display: flex;
+      align-items: center;
+    }
+
+    .toggle-icon {
+      font-size: 24px;
+      margin-left: 5px;
+      vertical-align: middle;
+      cursor: pointer;
+    }
+
+    #settings-window {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 999;
+      background-color: #f2f2f2;
+      padding: 20px;
+      padding-right: 50px;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+      border-radius: 10px;
+      border: 2px solid #333;
+      font-size: 18px;
+    }
+
     .country-card {
       position: fixed;
       top: 50%;
       left: 75%;
       transform: translate(-50%, -50%);
-      z-index: 999;
       line-height: 1;
       background-color: #f2f2f2;
       padding: 20px;
@@ -119,11 +190,14 @@
     .pagination {
       position: fixed;
       bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: center;
     }
 
     .pagination-container {
+      flex-wrap: wrap;
       display: flex;
       justify-content: center;
     }
@@ -187,6 +261,7 @@
 
     #expand-icon,
     #expand-icon-less {
+      font-size: 24px;
       cursor: pointer;
     }
 
@@ -204,6 +279,7 @@
     }
 
     .close-icon {
+      font-size: 24px;
       position: absolute;
       top: 1px;
       right: 1px;
@@ -247,11 +323,30 @@
         width: 90%;
       }
 
+      #settings-window {
+        font-size: calc(18px + (100vh - 100vw) / 100);
+      }
+
+      .toggle-icon,
+      .close-icon,
+      #expand-icon {
+        font-size: calc(24px + (100vh - 100vw) / 100);
+      }
+
+      .country-card p {
+        margin-bottom: 0;
+      }
+
       .country-card {
         top: auto;
         bottom: 10%;
         left: 50%;
         transform: translateX(-50%);
+      }
+
+      .pagination button {
+        font-size: calc(16px + (100vh - 100vw) / 100);
+        padding: 5px 10px;
       }
     }
   </style>
@@ -259,8 +354,14 @@
 
 <body>
   <h1>
-    <span class="material-symbols-outlined earth" onclick="location.reload()">public</span>
+    <span class="material-symbols-outlined logo" onclick="location.reload()">public</span>
     <span class="header" onclick="location.reload()">NationHub</span>
+    <span class="material-symbols-outlined settings" onclick="showSettingsWindow()">settings</span>
+    <span id="dark-mode-toggle" class="material-symbols-outlined dark-mode-icon"
+      onclick="toggleDarkMode()">dark_mode</span>
+    <!-- <span class="material-symbols-outlined">
+      light_mode
+      </span> -->
   </h1>
   <div class="table-container">
     <table id="countries-table">
@@ -275,6 +376,19 @@
         <th class="region-column">Region</th>
       </tr>
     </table>
+
+    <div class="overlay"></div>
+    <div id="settings-window">
+      <h2 class="settings-title">Settings</h2>
+      <div class="toggle-container">
+        <strong>Open Big Card by Default:</strong>
+        <span class="material-symbols-outlined toggle-icon">toggle_on</span>
+        <div class="toggle-switch">
+          <input type="checkbox" id="big-card-toggle" hidden>
+        </div>
+      </div>
+      <span class="material-symbols-outlined close-icon ">close</span>
+    </div>
 
     <div class="pagination">
       <div class="pagination-container"></div>
@@ -300,7 +414,7 @@
           document.body.style.fontSize = fontSize + 'px';
           return Math.floor(distanceToCenter / 58);
         } else {
-          document.body.style.fontSize = 16 + 'px';
+          document.body.style.fontSize = '16px';
           return Math.floor(distanceToButtons / 42.65);
         }
       }
@@ -363,7 +477,7 @@
             <td><img src="https://flagcdn.com/24x18/${getCountryCode(country)}.png" alt="${countryName} Flag"></td>
             <td>${countryName}</td>
             <td>${countryRegion}</td>`;
-          row.addEventListener('click', () => showCountryInfo(row, country));
+          row.addEventListener('click', () => bigCardToggle.checked ? showExpandedCountryInfo(row, country) : showCountryInfo(row, country));
           countriesTable.appendChild(row);
         });
       }
@@ -377,6 +491,7 @@
       let openCountryRow = null;
 
       function showExpandedCountryInfo(row, country) {
+        hideCountryInfo();
         const countryCard = document.createElement('div');
         countryCard.classList.add('country-card');
         countryCard.innerHTML = '<div class="loader"></div>';
@@ -433,10 +548,7 @@
               const closeIcon = countryCard.querySelector('.close-icon');
               closeIcon?.addEventListener('click', () => hideCountryInfo());
               const expandIcon = document.getElementById('expand-icon-less');
-              expandIcon?.addEventListener('click', function () {
-                hideCountryInfo();
-                showCountryInfo(row, country);
-              });
+              expandIcon?.addEventListener('click', () => showCountryInfo(row, country));
             })
             .catch(error => handleError(error, countryCard));
         }
@@ -471,10 +583,7 @@
           const closeIcon = countryCard.querySelector('.close-icon');
           closeIcon?.addEventListener('click', () => hideCountryInfo());
           const expandIcon = document.getElementById('expand-icon');
-          expandIcon?.addEventListener('click', function () {
-            hideCountryInfo();
-            showExpandedCountryInfo(row, country);
-          });
+          expandIcon?.addEventListener('click', () => showExpandedCountryInfo(row, country));
         }
       }
 
@@ -500,7 +609,7 @@
           }
           return null;
         }
-        showCountryInfo(row, country);
+        showExpandedCountryInfo(row, country);
       }
 
       function hideCountryInfo() {
@@ -572,10 +681,63 @@
         sortButton.dataset.sortOrder = sortOrder;
       }
 
+      function toggleDarkMode() {
+        const darkModeToggle = document.getElementById('dark-mode-toggle');
+        const currentIcon = darkModeToggle.textContent;
+        if (currentIcon === 'dark_mode') {
+          darkModeToggle.textContent = 'light_mode';
+          document.body.classList.remove('dark-mode');
+          document.body.classList.add('light-mode');
+        } else {
+          darkModeToggle.textContent = 'dark_mode';
+          document.body.classList.remove('light-mode');
+          document.body.classList.add('dark-mode');
+        }
+        localStorage.setItem('darkModeIcon', darkModeToggle.textContent);
+      }
+
+      function showSettingsWindow() {
+        const overlay = document.querySelector('.overlay');
+        const settingsWindow = document.getElementById('settings-window');
+        settingsWindow.style.display = 'block';
+        overlay.style.display = 'block';
+        const closeButton = settingsWindow.querySelector('.close-icon');
+        closeButton.addEventListener('click', hideSettingsWindow);
+        overlay.addEventListener('click', hideSettingsWindow);
+        function hideSettingsWindow() {
+          overlay.style.display = 'none';
+          settingsWindow.style.display = 'none';
+        }
+      }
+
+      let bigCardToggle;
+
       document.addEventListener('DOMContentLoaded', function () {
         toggleSortOrder();
-        fetchCountries();
         updateSortButton();
+        const darkModeToggle = document.getElementById('dark-mode-toggle');
+        const savedIcon = localStorage.getItem('darkModeIcon');
+        if (savedIcon) {
+          darkModeToggle.textContent = savedIcon;
+        }
+        if (darkModeToggle.textContent === 'dark_mode') {
+          document.body.classList.add('dark-mode');
+        } else {
+          document.body.classList.add('light-mode');
+        }
+        bigCardToggle = document.getElementById('big-card-toggle');
+        const toggleIcon = document.querySelector('.toggle-icon');
+        toggleIcon.addEventListener('click', function () {
+          bigCardToggle.checked = !bigCardToggle.checked;
+          toggleIcon.textContent = bigCardToggle.checked ? 'toggle_on' : 'toggle_off';
+          localStorage.setItem('bigCardToggle', bigCardToggle.checked);
+        });
+        const initialBigCardValue = localStorage.getItem('bigCardToggle');
+        if (initialBigCardValue) {
+          bigCardToggle.checked = initialBigCardValue === 'true';
+        }
+        toggleIcon.textContent = bigCardToggle.checked ? 'toggle_on' : 'toggle_off';
+        fetchCountries();
       });
 
       function handleError(error, countryCard) {
