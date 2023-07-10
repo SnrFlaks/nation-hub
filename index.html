@@ -13,21 +13,18 @@
       border-collapse: collapse;
       width: 100%;
       box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+      border-spacing: 0;
+      border-collapse: separate;
     }
 
     .dark-mode table {
-      box-shadow: 0 0 25px rgba(255, 255, 255, 0.2);
+      box-shadow: 0 0 25px rgba(255, 255, 255, 0.1);
     }
 
     table th,
     table td {
       text-align: left;
-      overflow: hidden;
       padding: 7px;
-    }
-
-    .dark-mode table td {
-      color: white;
     }
 
     table tr:first-child {
@@ -48,12 +45,12 @@
     tr.selected {
       cursor: pointer;
       transform: scale(1.1);
-      box-shadow: 0 0 15px rgba(0, 0, 0, 0.7);
+      filter: drop-shadow(0 0 5px rgba(0, 0, 0, 0.7));
     }
 
     .dark-mode table tr:not(:first-child):hover,
     .dark-mode tr.selected {
-      box-shadow: 0 0 15px rgba(255, 255, 255, 0.7);
+      filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.7));
     }
 
     table tr:first-child th:first-child {
@@ -93,11 +90,13 @@
       box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
       border-radius: 10px;
       border: 2px solid #333;
+      border-spacing: 0;
+      border-collapse: separate;
       width: 25%;
     }
 
     .dark-mode .table-container {
-      box-shadow: 0 0 25px rgba(255, 255, 255, 0.2);
+      box-shadow: 0 0 25px rgba(255, 255, 255, 0.1);
       border: 2px solid #f0f0f0;
     }
 
@@ -108,6 +107,7 @@
 
     body.dark-mode {
       background-color: #242424;
+      color: white;
     }
 
     h1 {
@@ -124,7 +124,6 @@
     }
 
     .dark-mode h1 {
-      color: white;
       box-shadow: 0 0 25px rgba(255, 255, 255, 0.2);
       background-color: #3d3d3d;
       border: 2px solid #f0f0f0;
@@ -152,6 +151,7 @@
       background-color: rgba(0, 0, 0, 0.7);
       z-index: 998;
       display: none;
+      backdrop-filter: blur(2px);
     }
 
     .dark-mode-icon {
@@ -188,7 +188,9 @@
       vertical-align: middle;
     }
 
-    #settings-window {
+    #settings-window,
+    #map-window,
+    #city-table {
       display: none;
       position: fixed;
       top: 50%;
@@ -197,17 +199,17 @@
       z-index: 999;
       background-color: #f2f2f2;
       padding: 20px;
-      padding-right: 50px;
       box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
       border-radius: 10px;
       border: 2px solid #333;
       font-size: 18px;
     }
 
-    .dark-mode #settings-window {
+    .dark-mode #settings-window,
+    .dark-mode #map-window,
+    .dark-mode #city-table {
       background-color: #3d3d3d;
-      color: white;
-      box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+      box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
       border: 2px solid #f0f0f0;
     }
 
@@ -225,7 +227,6 @@
     }
 
     .dark-mode .country-card {
-      color: white;
       background-color: #3d3d3d;
       box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
       border: 2px solid #f0f0f0;
@@ -242,32 +243,10 @@
       margin-bottom: 7px;
     }
 
-    .map-icon {
+    .map-icon,
+    .cities-icon {
       margin-left: 5px;
       cursor: pointer;
-    }
-
-    #map-window {
-      display: none;
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      z-index: 999;
-      background-color: #f2f2f2;
-      padding: 20px;
-      box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
-      border-radius: 10px;
-      border: 2px solid #333;
-      font-size: 18px;
-      flex-direction: column;
-      align-items: center;
-    }
-
-    .dark-mode #map-window {
-      background-color: #3d3d3d;
-      box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
-      border: 2px solid #f0f0f0;
     }
 
     #map-container {
@@ -279,10 +258,6 @@
 
     .dark-mode #map-container {
       border: 2px solid #f0f0f0;
-    }
-
-    .dark-mode .map-title {
-      color: white;
     }
 
     #map-buttons {
@@ -305,6 +280,16 @@
       cursor: pointer;
     }
 
+    #cities-list {
+      border-radius: 10px;
+      border: 2px solid #333;
+      margin-bottom: 30px;
+    }
+
+    .dark-mode #cities-list {
+      border: 2px solid #f0f0f0;
+    }
+
     .neighboring-country-icon {
       cursor: pointer;
     }
@@ -314,40 +299,53 @@
       bottom: 20px;
       left: 0;
       right: 0;
+    }
+
+    .cities-pagination {
+      align-items: center;
+    }
+
+    .pagination,
+    .cities-pagination {
       display: flex;
       justify-content: center;
     }
 
-    .pagination-container {
-      flex-wrap: wrap;
+    .pagination-container,
+    .cities-pagination-container {
       display: flex;
       justify-content: center;
-      z-index: 999;
     }
 
-    .pagination button {
+    .pagination button,
+    .cities-pagination button {
       margin: 0 5px;
       padding: 5px 10px;
       background-color: #f2f2f2;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
       border: none;
       border-radius: 5px;
       cursor: pointer;
     }
 
-    .pagination button.active {
+    .pagination button.active,
+    .cities-pagination button.active {
       background-color: #525252;
-      box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.6);
       color: white;
     }
 
-    .dark-mode .pagination button {
+    .dark-mode .pagination button,
+    .dark-mode .cities-pagination button {
       color: white;
       background-color: #525252;
+      box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
     }
 
-    .dark-mode .pagination button.active {
+    .dark-mode .pagination button.active,
+    .dark-mode .cities-pagination button.active {
       background-color: #f2f2f2;
-      box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+      box-shadow: 0 0 15px rgba(255, 255, 255, 0.6);
       color: black;
     }
 
@@ -435,10 +433,6 @@
       cursor: pointer;
     }
 
-    .dark-mode .close-icon {
-      color: white;
-    }
-
     .gdp-growth {
       font-weight: bold;
     }
@@ -456,9 +450,14 @@
       width: 30px;
       height: 30px;
       border: 4px solid #f3f3f3;
-      border-top: 4px solid #525252;
+      border-top: 4px solid #00000000;
       border-radius: 50%;
       animation: spin 1s linear infinite;
+      filter: drop-shadow(0 0 5px rgba(0, 0, 0, 0.7));
+    }
+
+    .dark-mode .loader {
+      filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.7));
     }
 
     @keyframes spin {
@@ -476,15 +475,14 @@
         width: 90%;
       }
 
-      #settings-window {
+      #settings-window,
+      #city-table {
         font-size: calc(18px + (100vh - 100vw) / 100);
       }
 
       .toggle-icon {
         width: calc(36px + (100vh - 100vw) / 50);
-        ;
         height: calc(36px + (100vh - 100vw) / 50);
-        ;
       }
 
       .close-icon,
@@ -503,7 +501,8 @@
         transform: translateX(-50%);
       }
 
-      .pagination button {
+      .pagination button,
+      .cities-pagination button {
         font-size: calc(16px + (100vh - 100vw) / 100);
         padding: 5px 10px;
       }
@@ -547,7 +546,7 @@
       </div>
       <span class="material-symbols-outlined close-icon">close</span>
     </div>
-    
+
     <div id="map-window">
       <h2 class="map-title">Map of <span id="country-name"></span></h2>
       <div id="map-buttons">
@@ -565,10 +564,19 @@
       <div id="map-container"></div>
     </div>
 
+    <div class="table" id="city-table">
+      <h2 class="city-title"></h2>
+      <span class="material-symbols-outlined close-icon">close</span>
+      <table id="cities-list"></table>
+      <div class="cities-pagination">
+        <div class="cities-pagination-container"></div>
+      </div>
+    </div>
+
     <div class="pagination">
       <div class="pagination-container"></div>
     </div>
-    
+
     <script src="https://cdn.jsdelivr.net/npm/leaflet@1.7.1/dist/leaflet.js"></script>
     <script>
       let sortOrder = 'asc';
@@ -597,8 +605,17 @@
 
       window.addEventListener('resize', function () {
         countriesPerPage = calculateCountriesPerPage();
-        renderCountriesTable(independentCountries, currentPage);
-        renderPagination(Math.ceil(independentCountries.length / countriesPerPage))
+        renderPagination(Math.ceil(independentCountries.length / countriesPerPage));
+        const mapWindow = document.getElementById('map-window');
+        const cityTable = document.getElementById('city-table');
+        if (mapWindow && mapWindow.style.display === 'block') {
+          hideMapOfCountry();
+        }
+        if (cityTable && cityTable.style.display === 'block') {
+          hideCountryCitiesTable();
+        }
+        hideCountryInfo();
+        setCurrentPage(1);
       });
 
       function fetchCountries() {
@@ -711,6 +728,7 @@
                 <h2>
                   ${country.name.common}
                   <span class="material-symbols-outlined map-icon" onclick="showMapOfCountry('${country.name.common}')">location_on</span>
+                  <span class="material-symbols-outlined cities-icon" onclick="showCountryCitiesTable('${country.name.common}')">apartment</span>
                 </h2>
                 <p><strong>Capital:</strong> ${country.capital}</p>
                 <p><strong>Language:</strong> ${country.languages[Object.keys(country.languages)[0]]}</p>
@@ -823,13 +841,7 @@
         const closeButton = mapWindow.querySelector('.close-icon');
         closeButton.addEventListener('click', hideMapOfCountry);
         overlay.addEventListener('click', hideMapOfCountry);
-        const existingMapContainer = document.getElementById('map-container');
-        if (existingMapContainer) {
-          mapWindow.removeChild(existingMapContainer);
-        }
-        const mapContainer = document.createElement('div');
-        mapContainer.id = 'map-container';
-        mapWindow.appendChild(mapContainer);
+        mapWindow.appendChild(document.getElementById('map-container'));
         const map = L.map('map-container').setView([country.latlng[0], country.latlng[1]], 5);
         const openstreetmapLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
           attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
@@ -866,6 +878,102 @@
         const mapWindow = document.getElementById('map-window');
         overlay.style.display = 'none';
         mapWindow.style.display = 'none';
+      }
+
+      function showCountryCitiesTable(countryName) {
+        const country = independentCountries.find((country) => country.name.common === countryName);
+        if (!country) return;
+        const cityTable = document.getElementById('city-table');
+        cityTable.innerHTML = '<div class="loader"></div>';
+        cityTable.style.display = 'block';
+        const apiUrl = `http://api.geonames.org/searchJSON?country=${getCountryCode(country)}&featureCode=PPLC&featureCode=PPLA&maxRows=1000&username=flaks`;
+        const cachedData = localStorage.getItem(apiUrl);
+        if (cachedData) {
+          processCityData(JSON.parse(cachedData));
+        } else {
+          fetch(apiUrl)
+            .then((response) => response.json())
+            .then((data) => {
+              const cities = data.geonames || [];
+              const cityDataPromises = cities.map((city) =>
+                fetch(`http://api.geonames.org/getJSON?geonameId=${city.geonameId}&username=flaks`).then((response) => response.json())
+              );
+              return Promise.all(cityDataPromises).then((cityDataArray) => ({ cities, cityDataArray }));
+            })
+            .then(({ cities, cityDataArray }) => {
+              processCityData({ cities, cityDataArray });
+              localStorage.setItem(apiUrl, JSON.stringify({ cities, cityDataArray }));
+            })
+            .catch((error) => {
+              console.log('Error:', error);
+            });
+        }
+
+        function processCityData({ cities, cityDataArray }) {
+          const filteredCities = cityDataArray.filter((cityData) => cityData.population > 0).sort((a, b) => b.population - a.population);
+          const citiesPerPage = countriesPerPage > 15 ? 15 : countriesPerPage;
+          const totalPages = Math.ceil(filteredCities.length / citiesPerPage);
+          const divContainer = document.createElement('div');
+          divContainer.innerHTML = `
+            <h2 class="city-title">Cities of ${countryName}</h2>
+            <span class="material-symbols-outlined close-icon">close</span>
+            <table id="cities-list"></table>
+            <div class="cities-pagination">
+              <div class="cities-pagination-container"></div>
+            </div>`;
+          const closeIcon = divContainer.querySelector('.close-icon');
+          const citiesTable = divContainer.querySelector('#cities-list');
+          cityTable.innerHTML = '';
+          cityTable.appendChild(divContainer);
+          function renderCitiesTable(page) {
+            const startIndex = (page - 1) * citiesPerPage;
+            const endIndex = startIndex + citiesPerPage;
+            const citiesToShow = filteredCities.slice(startIndex, endIndex);
+            citiesTable.innerHTML = `
+              <tr>
+                <th>City</th>
+                <th>Population</th>
+              </tr> ${citiesToShow.map((cityData) => `
+                <tr>
+                  <td>${cityData.name}</td>
+                  <td>${cityData.population}</td>
+                </tr>`).join('')}`;
+          }
+          renderCitiesTable(1);
+          if (totalPages > 1) {
+            renderCitiesPagination(totalPages);
+          }
+          const overlay = document.querySelector('.overlay');
+          overlay.style.display = 'block';
+          closeIcon.addEventListener('click', hideCountryCitiesTable);
+          overlay.addEventListener('click', hideCountryCitiesTable);
+
+          function renderCitiesPagination(totalPages) {
+            const paginationContainer = document.querySelector('.cities-pagination-container');
+            paginationContainer.innerHTML = '';
+            for (let i = 1; i <= totalPages; i++) {
+              const button = document.createElement('button');
+              button.textContent = i;
+              button.addEventListener('click', () => {
+                renderCitiesTable(i);
+                const buttons = paginationContainer.querySelectorAll('button');
+                buttons.forEach((btn) => btn.classList.remove('active'));
+                button.classList.add('active');
+              });
+              if (i === 1) {
+                button.classList.add('active');
+              }
+              paginationContainer.appendChild(button);
+            }
+          }
+        }
+      }
+
+      function hideCountryCitiesTable() {
+        const overlay = document.querySelector('.overlay');
+        const cityTable = document.getElementById('city-table');
+        cityTable.style.display = 'none';
+        overlay.style.display = 'none';
       }
 
       function getNeighboringCountries(country) {
@@ -943,9 +1051,13 @@
       function showSettingsWindow() {
         const overlay = document.querySelector('.overlay');
         const mapWindow = document.getElementById('map-window');
+        const cityTable = document.getElementById('city-table');
         const settingsWindow = document.getElementById('settings-window');
         if (mapWindow && mapWindow.style.display === 'block') {
           hideMapOfCountry();
+        }
+        if (cityTable && cityTable.style.display === 'block') {
+          hideCountryCitiesTable();
         }
         settingsWindow.style.display = 'block';
         overlay.style.display = 'block';
@@ -991,7 +1103,7 @@
 
       function handleError(error, countryCard) {
         console.log('Error:', error);
-        countryCard.innerHTML = 'Failed to fetch country information.';
+        if (countryCard) countryCard.innerHTML = 'Failed to fetch country information.';
       }
     </script>
   </div>
