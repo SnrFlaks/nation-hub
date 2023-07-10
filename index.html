@@ -286,6 +286,10 @@
       margin-bottom: 30px;
     }
 
+    #cities-list td:last-child {
+      width: 50%;
+    }
+
     .dark-mode #cities-list {
       border: 2px solid #f0f0f0;
     }
@@ -886,7 +890,7 @@
         const cityTable = document.getElementById('city-table');
         cityTable.innerHTML = '<div class="loader"></div>';
         cityTable.style.display = 'block';
-        const apiUrl = `http://api.geonames.org/searchJSON?country=${getCountryCode(country)}&featureCode=PPLC&featureCode=PPLA&maxRows=1000&username=flaks`;
+        const apiUrl = `https://secure.geonames.org/searchJSON?country=${getCountryCode(country)}&featureCode=PPLC&featureCode=PPLA&maxRows=1000&username=flaks`;
         const cachedData = localStorage.getItem(apiUrl);
         if (cachedData) {
           processCityData(JSON.parse(cachedData));
@@ -896,7 +900,7 @@
             .then((data) => {
               const cities = data.geonames || [];
               const cityDataPromises = cities.map((city) =>
-                fetch(`http://api.geonames.org/getJSON?geonameId=${city.geonameId}&username=flaks`).then((response) => response.json())
+                fetch(`https://secure.geonames.org/getJSON?geonameId=${city.geonameId}&username=flaks`).then((response) => response.json())
               );
               return Promise.all(cityDataPromises).then((cityDataArray) => ({ cities, cityDataArray }));
             })
