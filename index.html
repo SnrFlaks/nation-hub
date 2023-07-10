@@ -244,14 +244,26 @@
     }
 
     .map-icon,
-    .cities-icon {
+    .cities-icon,
+    .wiki-icon {
       margin-left: 5px;
       cursor: pointer;
     }
 
+    .wiki-icon {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      transform: scale(1.5);
+    }
+
+    .dark-mode .wiki-icon {
+      filter: invert(100%);
+    }
+
     #map-container {
-      width: 50vw;
-      height: 50vh;
+      width: 45vw;
+      height: 45vh;
       border-radius: 10px;
       border: 2px solid #333;
     }
@@ -319,6 +331,7 @@
     .cities-pagination-container {
       display: flex;
       justify-content: center;
+      flex-wrap: wrap;
     }
 
     .pagination button,
@@ -474,7 +487,7 @@
       }
     }
 
-    @media (min-height: calc(100vw + 250px)) {
+    @media (orientation: portrait) {
       .table-container {
         width: 90%;
       }
@@ -494,7 +507,12 @@
         font-size: calc(24px + (100vh - 100vw) / 100);
       }
 
+      .country-card h2 {
+        font-size: calc(24px + (100vh - 100vw) / 100);
+      }
+
       .country-card p {
+        font-size: calc(18px + (100vh - 100vw) / 100);
         margin-bottom: 0;
       }
 
@@ -568,14 +586,7 @@
       <div id="map-container"></div>
     </div>
 
-    <div class="table" id="city-table">
-      <h2 class="city-title"></h2>
-      <span class="material-symbols-outlined close-icon">close</span>
-      <table id="cities-list"></table>
-      <div class="cities-pagination">
-        <div class="cities-pagination-container"></div>
-      </div>
-    </div>
+    <div class="table" id="city-table"></div>
 
     <div class="pagination">
       <div class="pagination-container"></div>
@@ -595,7 +606,7 @@
         const paginationRect = paginationElement.getBoundingClientRect();
         const distanceToButtons = paginationRect.top - (h1Rect.top + h1Rect.height);
         const heightDifference = window.innerHeight - window.innerWidth;
-        if (heightDifference >= 250) {
+        if (window.matchMedia("(orientation: portrait)").matches) {
           const screenHeight = window.innerHeight;
           const distanceToCenter = screenHeight / 2 - (h1Rect.top + h1Rect.height);
           const fontSize = 16 + heightDifference / 100;
@@ -744,11 +755,20 @@
                 <p><strong>Territory:</strong> ${territory} km<sup>2</sup></p>
                 <p><strong>Region:</strong> ${country.region}/${country.subregion}</p>
                 <p><strong>Neighboring Countries:</strong> ${getNeighboringCountries(country)}</p>
+                <span class="wiki-icon" onclick="openCountryWiki('${country.name.common}')">
+                  <img src="https://upload.wikimedia.org/wikipedia/commons/1/14/OOjs_UI_icon_logo-wikipedia.svg" alt="Wikipedia">
+                </span>
                 <span id="expand-icon-less" class="material-symbols-outlined">expand_less</span>`;
                 const closeIcon = countryCard.querySelector('.close-icon');
                 closeIcon?.addEventListener('click', () => hideCountryInfo());
                 const expandIcon = document.getElementById('expand-icon-less');
                 expandIcon?.addEventListener('click', () => showCountryInfo(row, country));
+                const maxHeight = window.innerHeight * 0.7;
+                if (countryCard.offsetHeight > maxHeight) {
+                  countryCard.style.fontSize = '12px';
+                } else {
+                  countryCard.style.fontSize = '18px';
+                }
               })
               .catch(error => handleError(error, countryCard));
           }
@@ -1035,6 +1055,11 @@
         sortSymbol.style.transform = `rotate(${sortOrder === 'asc' ? '90deg' : '270deg'})`;
         const sortButton = document.querySelector('.sort-button');
         sortButton.dataset.sortOrder = sortOrder;
+      }
+
+      function openCountryWiki(countryName) {
+        const wikiUrl = `https://en.wikipedia.org/wiki/${countryName}`;
+        window.open(wikiUrl, '_blank');
       }
 
       function toggleDarkMode() {
