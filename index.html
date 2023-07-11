@@ -2,7 +2,14 @@
 <html>
 
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <title>NationHub</title>
+  <meta name="description"
+    content="Explore countries from around the world, including their capitals, languages, populations, and more. Discover interesting information about each country.">
+  <meta name="keywords" content="countries, world, capitals, languages, populations, facts, information">
+  <meta name="author" content="flAks">
   <link rel="icon" type="image/png" href="/images/favicon-32x32.png">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
     integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
@@ -941,13 +948,18 @@
         loadResource(apiUrl, 'text')
           .then(data => {
             const cachedData = JSON.parse(data);
+            if (cachedData.status && cachedData.status.value === 19) {
+              throw new Error('Request limit exceeded');
+            }
             processCityData(cachedData);
           })
           .catch(error => {
-            console.log('Error:', error);
+            console.error('Error:', error);
+            cityTable.innerHTML = '<div class="error-message">Sorry, an error occurred while fetching city data. Please try again later.</div>';
           });
 
         function processCityData({ cities, cityDataArray }) {
+          console.log(cities, " ", cityDataArray);
           const filteredCities = cityDataArray.filter((cityData) => cityData.population > 0).sort((a, b) => b.population - a.population);
           const citiesPerPage = countriesPerPage > 15 ? 15 : countriesPerPage;
           const totalPages = Math.ceil(filteredCities.length / citiesPerPage);
