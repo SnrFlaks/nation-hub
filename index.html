@@ -4,8 +4,8 @@
 <head>
   <title>NationHub</title>
   <link rel="icon" type="image/png" href="/images/favicon-32x32.png">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <link rel="stylesheet" href="leaflet/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin />
   <link rel="stylesheet"
     href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@48,400,0,0" />
   <style>
@@ -257,7 +257,14 @@
       transform: scale(1.5);
     }
 
-    .dark-mode .wiki-icon {
+    .cities-wiki-icon {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .dark-mode .wiki-icon,
+    .dark-mode .cities-wiki-icon {
       filter: invert(100%);
     }
 
@@ -296,10 +303,6 @@
       border-radius: 10px;
       border: 2px solid #333;
       margin-bottom: 30px;
-    }
-
-    #cities-list td:last-child {
-      width: 50%;
     }
 
     .dark-mode #cities-list {
@@ -573,13 +576,10 @@
       <h2 class="map-title">Map of <span id="country-name"></span></h2>
       <div id="map-buttons">
         <button id="googlemaps-button">
-          <img class="map-button-icon" src="https://developers.google.com/maps/images/maps-icon.svg"
-            alt="GoogleMap Logo">
+          <img class="map-button-icon" src="images/maps-icon.svg" alt="GoogleMap Logo">
         </button>
         <button id="openstreetmap-button">
-          <img class="map-button-icon"
-            src="https://www.openstreetmap.org/assets/osm_logo-4afddaae0230a5a46687fdc751ed256dfdccde144118cb02a7d7960f207a4b92.svg"
-            alt="OpenStreetMap Logo">
+          <img class="map-button-icon" src="images/osm-icon.svg" alt="OpenStreetMap Logo">
         </button>
       </div>
       <span class="material-symbols-outlined close-icon">close</span>
@@ -592,16 +592,26 @@
       <div class="pagination-container"></div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="leaflet/leaflet.js"></script>
     <script>
-      let sortOrder = 'asc';
+      const h1Element = document.querySelector('h1');
+      const paginationElement = document.querySelector('.pagination');
+      const mapWindow = document.getElementById('map-window');
+      const cityTable = document.getElementById('city-table');
+      const paginationContainer = document.querySelector('.pagination-container');
+      const countriesTable = document.getElementById('countries-table');
+      const overlay = document.querySelector('.overlay');
+      const countryNameElement = document.getElementById('country-name');
+      const darkModeToggle = document.getElementById('dark-mode-toggle');
+      const settingsWindow = document.getElementById('settings-window');
+      const sortButton = document.querySelector('.sort-button');
+
+      let sortOrder = true;
       let currentPage = 1;
       let totalPages = 1;
       let independentCountries = [];
       let countriesPerPage = calculateCountriesPerPage();
       function calculateCountriesPerPage() {
-        const h1Element = document.querySelector('h1');
-        const paginationElement = document.querySelector('.pagination');
         const h1Rect = h1Element.getBoundingClientRect();
         const paginationRect = paginationElement.getBoundingClientRect();
         const distanceToButtons = paginationRect.top - (h1Rect.top + h1Rect.height);
@@ -621,8 +631,6 @@
       window.addEventListener('resize', function () {
         countriesPerPage = calculateCountriesPerPage();
         renderPagination(Math.ceil(independentCountries.length / countriesPerPage));
-        const mapWindow = document.getElementById('map-window');
-        const cityTable = document.getElementById('city-table');
         if (mapWindow && mapWindow.style.display === 'block') {
           hideMapOfCountry();
         }
@@ -650,7 +658,6 @@
       }
 
       function renderPagination(totalPages) {
-        const paginationContainer = document.querySelector('.pagination-container');
         paginationContainer.innerHTML = '';
         for (let i = 1; i <= totalPages; i++) {
           const button = document.createElement('button');
@@ -663,27 +670,43 @@
         }
       }
 
-      function renderCountriesTable(countries, currentPage) {
+      async function renderCountriesTable(countries, currentPage) {
         const startIndex = (currentPage - 1) * countriesPerPage;
-        const countriesTable = document.getElementById('countries-table');
         countriesTable.innerHTML = `
           <tr>
             <th class="flag-column"></th>
             <th class="country-column">
               <span>Country</span>
               <button class="sort-button" onclick="sortTable()">
-                <span id="sort-symbol" class="material-symbols-outlined sort-icon">switch_right</span>
+              <span id="sort-symbol" class="material-symbols-outlined sort-icon">switch_right</span>
               </button>
             </th>
           </tr>`;
-        countries.slice(startIndex, startIndex + countriesPerPage).forEach(country => {
+        const imagePromises = [];
+        for (let i = startIndex; i < startIndex + countriesPerPage; i++) {
+          const country = countries[i];
+          if (!country) break;
           const countryName = country.name.common;
           const row = document.createElement('tr');
-          row.innerHTML = `
-            <td><img src="https://flagcdn.com/24x18/${getCountryCode(country)}.png" alt="${countryName} Flag"></td>
-            <td>${countryName}</td>`;
+          const imagePromise = loadResource(`https://flagcdn.com/24x18/${getCountryCode(country)}.png`, 'image');
+          imagePromises.push(imagePromise);
+          const imageCell = document.createElement('td');
+          row.appendChild(imageCell);
+          const countryNameCell = document.createElement('td');
+          countryNameCell.textContent = countryName;
+          row.appendChild(countryNameCell);
           row.addEventListener('click', () => bigCardToggle.checked ? showExpandedCountryInfo(row, country) : showCountryInfo(row, country));
           countriesTable.appendChild(row);
+        }
+        const images = await Promise.all(imagePromises);
+        const flagCells = Array.from(countriesTable.querySelectorAll('td:first-child'));
+        flagCells.forEach((cell, index) => {
+          const img = document.createElement('img');
+          img.src = images[index].src;
+          img.width = 24;
+          img.height = 18;
+          img.alt = countries[startIndex + index].name.common + ' Flag';
+          cell.appendChild(img);
         });
       }
 
@@ -703,23 +726,14 @@
           countryCard.classList.add('country-card');
           countryCard.innerHTML = '<div class="loader"></div>';
           const apiUrl = `https://api.api-ninjas.com/v1/country?name=${getCountryCode(country)}`;
-          const cachedData = localStorage.getItem(apiUrl);
-          if (cachedData) {
-            const data = JSON.parse(cachedData);
-            renderCountryInfo(data);
-          } else {
-            fetch(apiUrl, {
-              headers: {
-                'X-Api-Key': 'W+OQ/iBAPzIQYLIRvdQgVQ==ixnCBWtlJHxmXrMv'
-              }
+          loadResource(apiUrl, 'text', { headers: { 'X-Api-Key': 'W+OQ/iBAPzIQYLIRvdQgVQ==ixnCBWtlJHxmXrMv' } })
+            .then(data => {
+              const cachedData = JSON.parse(data);
+              renderCountryInfo(cachedData);
             })
-              .then(response => response.json())
-              .then(data => {
-                renderCountryInfo(data);
-                localStorage.setItem(apiUrl, JSON.stringify(data));
-              })
-              .catch(error => handleError(error, countryCard));
-          }
+            .catch(error => {
+              handleError(error, countryCard);
+            });
 
           function renderCountryInfo(data) {
             const countryData = data[0];
@@ -729,14 +743,22 @@
             const territory = countryData.surface_area || 'N/A';
             const currencyCode = getCurrencyCode(country.currencies);
             const exchangeUrl = `https://api.api-ninjas.com/v1/convertcurrency?have=${currencyCode}&want=USD&amount=1`;
-            fetch(exchangeUrl)
-              .then(response => response.json())
+            loadResource(exchangeUrl, 'text')
               .then(data => {
-                const exchangeRate = data.new_amount;
-                const currencyDisplay = `${currencyCode} (${exchangeRate.toFixed(2)} USD)`;
-                countryCard.innerHTML = `
+                const cachedData = JSON.parse(data);
+                displayCountryInfo(cachedData);
+              })
+              .catch(error => {
+                handleError(error, countryCard);
+              });
+
+            async function displayCountryInfo(data) {
+              const exchangeRate = data.new_amount;
+              const currencyDisplay = `${currencyCode} (${exchangeRate.toFixed(2)} USD)`;
+              const flagImage = await loadResource(`https://flagcdn.com/h120/${getCountryCode(country)}.png`, 'image');
+              countryCard.innerHTML = `
                 <span class="flag-coat">
-                  <img class="flag-image" src="https://flagcdn.com/h120/${getCountryCode(country)}.png" height="120" width="190" alt="${country.name.common} Flag">
+                  <img class="flag-image" src="${flagImage.src}" alt="${country.name.common} Flag">
                   <img class="coat-image" src="https://mainfacts.com/media/images/coats_of_arms/${getCountryCode(country)}.svg" alt="${country.name.common} Coat">
                 </span>
                 <span class="material-symbols-outlined close-icon">close</span>
@@ -759,18 +781,17 @@
                   <img src="https://upload.wikimedia.org/wikipedia/commons/1/14/OOjs_UI_icon_logo-wikipedia.svg" alt="Wikipedia">
                 </span>
                 <span id="expand-icon-less" class="material-symbols-outlined">expand_less</span>`;
-                const closeIcon = countryCard.querySelector('.close-icon');
-                closeIcon?.addEventListener('click', () => hideCountryInfo());
-                const expandIcon = document.getElementById('expand-icon-less');
-                expandIcon?.addEventListener('click', () => showCountryInfo(row, country));
-                const maxHeight = window.innerHeight * 0.7;
-                if (countryCard.offsetHeight > maxHeight) {
-                  countryCard.style.fontSize = '12px';
-                } else {
-                  countryCard.style.fontSize = '18px';
-                }
-              })
-              .catch(error => handleError(error, countryCard));
+              const closeIcon = countryCard.querySelector('.close-icon');
+              closeIcon?.addEventListener('click', () => hideCountryInfo());
+              const expandIcon = document.getElementById('expand-icon-less');
+              expandIcon?.addEventListener('click', () => showCountryInfo(row, country));
+              const maxHeight = window.innerHeight * 0.7;
+              if (countryCard.offsetHeight > maxHeight) {
+                countryCard.style.fontSize = '12px';
+              } else {
+                countryCard.style.fontSize = '18px';
+              }
+            }
           }
           row.classList.add('selected');
           document.body.appendChild(countryCard);
@@ -818,7 +839,6 @@
           row = getRowOfCountry(country);
         }
         function getRowOfCountry(country) {
-          const countriesTable = document.getElementById('countries-table');
           const rows = countriesTable.getElementsByTagName('tr');
           for (let i = 1; i < rows.length; i++) {
             const currentRow = rows[i];
@@ -853,12 +873,11 @@
         }
       }
 
+      let map = null;
+
       function showMapOfCountry(countryName) {
         const country = independentCountries.find(country => country.name.common === countryName);
         if (!country) return;
-        const overlay = document.querySelector('.overlay');
-        const mapWindow = document.getElementById('map-window');
-        const countryNameElement = document.getElementById('country-name');
         countryNameElement.textContent = countryName;
         overlay.style.display = 'block';
         mapWindow.style.display = 'block';
@@ -866,40 +885,42 @@
         closeButton.addEventListener('click', hideMapOfCountry);
         overlay.addEventListener('click', hideMapOfCountry);
         mapWindow.appendChild(document.getElementById('map-container'));
-        const map = L.map('map-container').setView([country.latlng[0], country.latlng[1]], 5);
-        const openstreetmapLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-        });
-        const googlemapsStreetsLayer = L.tileLayer('http://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
-          maxZoom: 20,
-          subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
-        });
-        googlemapsStreetsLayer.addTo(map);
+        if (!map) {
+          map = L.map('map-container');
+          const openstreetmapLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+          });
+          const googlemapsStreetsLayer = L.tileLayer('http://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+            maxZoom: 20,
+            subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
+          });
+          googlemapsStreetsLayer.addTo(map);
+          const openstreetmapButton = document.getElementById('openstreetmap-button');
+          const googlemapsButton = document.getElementById('googlemaps-button');
+          openstreetmapButton.addEventListener('click', () => {
+            if (map.hasLayer(googlemapsStreetsLayer)) {
+              map.removeLayer(googlemapsStreetsLayer);
+              openstreetmapLayer.addTo(map);
+            }
+          });
+          googlemapsButton.addEventListener('click', () => {
+            if (!map.hasLayer(googlemapsStreetsLayer)) {
+              map.removeLayer(openstreetmapLayer);
+              googlemapsStreetsLayer.addTo(map);
+            }
+          });
+        }
+        map.setView([country.latlng[0], country.latlng[1]], 5);
         const markerIcon = L.icon({
           iconUrl: 'https://upload.wikimedia.org/wikipedia/commons/d/d1/Google_Maps_pin.svg',
           iconSize: [25, 41],
           iconAnchor: [12, 41]
         });
-        const marker = L.marker([country.latlng[0], country.latlng[1]], { icon: markerIcon }).addTo(map);
-        const openstreetmapButton = document.getElementById('openstreetmap-button');
-        const googlemapsButton = document.getElementById('googlemaps-button');
-        openstreetmapButton.addEventListener('click', () => {
-          if (map.hasLayer(googlemapsStreetsLayer)) {
-            map.removeLayer(googlemapsStreetsLayer);
-            openstreetmapLayer.addTo(map);
-          }
-        });
-        googlemapsButton.addEventListener('click', () => {
-          if (!map.hasLayer(googlemapsStreetsLayer)) {
-            map.removeLayer(openstreetmapLayer);
-            googlemapsStreetsLayer.addTo(map);
-          }
-        });
+        const marker = L.marker([country.latlng[0], country.latlng[1]], { icon: markerIcon });
+        marker.addTo(map);
       }
 
       function hideMapOfCountry() {
-        const overlay = document.querySelector('.overlay');
-        const mapWindow = document.getElementById('map-window');
         overlay.style.display = 'none';
         mapWindow.style.display = 'none';
       }
@@ -911,27 +932,14 @@
         cityTable.innerHTML = '<div class="loader"></div>';
         cityTable.style.display = 'block';
         const apiUrl = `https://secure.geonames.org/searchJSON?country=${getCountryCode(country)}&featureCode=PPLC&featureCode=PPLA&maxRows=1000&username=flaks`;
-        const cachedData = localStorage.getItem(apiUrl);
-        if (cachedData) {
-          processCityData(JSON.parse(cachedData));
-        } else {
-          fetch(apiUrl)
-            .then((response) => response.json())
-            .then((data) => {
-              const cities = data.geonames || [];
-              const cityDataPromises = cities.map((city) =>
-                fetch(`https://secure.geonames.org/getJSON?geonameId=${city.geonameId}&username=flaks`).then((response) => response.json())
-              );
-              return Promise.all(cityDataPromises).then((cityDataArray) => ({ cities, cityDataArray }));
-            })
-            .then(({ cities, cityDataArray }) => {
-              processCityData({ cities, cityDataArray });
-              localStorage.setItem(apiUrl, JSON.stringify({ cities, cityDataArray }));
-            })
-            .catch((error) => {
-              console.log('Error:', error);
-            });
-        }
+        loadResource(apiUrl, 'text')
+          .then(data => {
+            const cachedData = JSON.parse(data);
+            processCityData(cachedData);
+          })
+          .catch(error => {
+            console.log('Error:', error);
+          });
 
         function processCityData({ cities, cityDataArray }) {
           const filteredCities = cityDataArray.filter((cityData) => cityData.population > 0).sort((a, b) => b.population - a.population);
@@ -957,23 +965,25 @@
               <tr>
                 <th>City</th>
                 <th>Population</th>
+                <th>Wiki</th>
               </tr> ${citiesToShow.map((cityData) => `
-                <tr>
+                <tr onclick="openCountryWiki('${cityData.name}')">
                   <td>${cityData.name}</td>
                   <td>${cityData.population}</td>
+                  <td><span class="cities-wiki-icon">
+                  <img src="https://upload.wikimedia.org/wikipedia/commons/1/14/OOjs_UI_icon_logo-wikipedia.svg" alt="Wikipedia">
+                </span></td>
                 </tr>`).join('')}`;
           }
           renderCitiesTable(1);
           if (totalPages > 1) {
             renderCitiesPagination(totalPages);
           }
-          const overlay = document.querySelector('.overlay');
           overlay.style.display = 'block';
           closeIcon.addEventListener('click', hideCountryCitiesTable);
           overlay.addEventListener('click', hideCountryCitiesTable);
 
           function renderCitiesPagination(totalPages) {
-            const paginationContainer = document.querySelector('.cities-pagination-container');
             paginationContainer.innerHTML = '';
             for (let i = 1; i <= totalPages; i++) {
               const button = document.createElement('button');
@@ -994,8 +1004,6 @@
       }
 
       function hideCountryCitiesTable() {
-        const overlay = document.querySelector('.overlay');
-        const cityTable = document.getElementById('city-table');
         cityTable.style.display = 'none';
         overlay.style.display = 'none';
       }
@@ -1045,16 +1053,15 @@
       }
 
       function toggleSortOrder() {
-        sortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
+        sortOrder = !sortOrder;
         const sortSymbol = document.getElementById('sort-symbol');
-        sortSymbol.style.transform = `rotate(${sortOrder === 'asc' ? '90deg' : '270deg'})`;
+        sortSymbol.style.transform = `rotate(${sortOrder ? '90deg' : '270deg'})`;
       }
 
       function updateSortButton() {
         const sortSymbol = document.getElementById('sort-symbol');
-        sortSymbol.style.transform = `rotate(${sortOrder === 'asc' ? '90deg' : '270deg'})`;
-        const sortButton = document.querySelector('.sort-button');
-        sortButton.dataset.sortOrder = sortOrder;
+        sortSymbol.style.transform = `rotate(${sortOrder ? '90deg' : '270deg'})`;
+        sortButton.dataset.sortOrder = sortOrder ? 'asc' : 'desc';
       }
 
       function openCountryWiki(countryName) {
@@ -1063,7 +1070,6 @@
       }
 
       function toggleDarkMode() {
-        const darkModeToggle = document.getElementById('dark-mode-toggle');
         const currentIcon = darkModeToggle.textContent;
         if (currentIcon === 'dark_mode') {
           darkModeToggle.textContent = 'light_mode';
@@ -1078,10 +1084,6 @@
       }
 
       function showSettingsWindow() {
-        const overlay = document.querySelector('.overlay');
-        const mapWindow = document.getElementById('map-window');
-        const cityTable = document.getElementById('city-table');
-        const settingsWindow = document.getElementById('settings-window');
         if (mapWindow && mapWindow.style.display === 'block') {
           hideMapOfCountry();
         }
@@ -1099,12 +1101,67 @@
         }
       }
 
+      function loadResource(url, resourceType) {
+        return new Promise((resolve, reject) => {
+          const cachedResource = localStorage.getItem(url);
+          if (cachedResource) {
+            if (resourceType === 'image') {
+              const image = new Image();
+              image.onload = () => resolve(image);
+              image.onerror = reject;
+              image.src = cachedResource;
+            } else {
+              resolve(cachedResource);
+            }
+          } else {
+            fetch(url)
+              .then(response => {
+                if (!response.ok) {
+                  throw new Error('Failed to fetch resource');
+                }
+                if (resourceType === 'image') {
+                  response.blob().then(blob => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                      const imageDataUrl = reader.result;
+                      const image = new Image();
+                      image.onload = () => resolve(image);
+                      image.onerror = reject;
+                      image.src = imageDataUrl;
+                      try {
+                        localStorage.setItem(url, imageDataUrl);
+                      } catch (error) {
+                        console.error('Failed to store image in local storage:', error);
+                      }
+                    };
+                    reader.readAsDataURL(blob);
+                  });
+                } else {
+                  response.text().then(data => {
+                    try {
+                      localStorage.setItem(url, data);
+                    } catch (error) {
+                      console.error('Failed to store resource in local storage:', error);
+                    }
+                    resolve(data);
+                  });
+                }
+              })
+              .catch(reject);
+          }
+        });
+      }
+
+      function handleError(error, countryCard) {
+        console.log('Error:', error);
+        if (countryCard) countryCard.innerHTML = 'Failed to fetch country information.';
+      }
+
       let bigCardToggle;
 
       document.addEventListener('DOMContentLoaded', function () {
         toggleSortOrder();
         updateSortButton();
-        const darkModeToggle = document.getElementById('dark-mode-toggle');
         const savedIcon = localStorage.getItem('darkModeIcon');
         if (savedIcon) {
           darkModeToggle.textContent = savedIcon;
@@ -1129,11 +1186,6 @@
         toggleIcon.src = bigCardToggle.checked ? '/images/toggle_on.svg' : '/images/toggle_off.svg';
         fetchCountries();
       });
-
-      function handleError(error, countryCard) {
-        console.log('Error:', error);
-        if (countryCard) countryCard.innerHTML = 'Failed to fetch country information.';
-      }
     </script>
   </div>
 </body>
