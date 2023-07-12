@@ -1,18 +1,20 @@
 const express = require('express');
 const path = require('path');
+const serverless = require('serverless-http');
 
 const app = express();
+const router = express.Router();
 
-app.use(express.static(path.join(__dirname, 'public'), { index: false }));
-
-app.get('/aboutus', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'aboutus.html'));
+router.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-app.get('/*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+router.get('/aboutus', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'aboutus.html'));
 });
 
-app.listen(5500, '127.0.0.1', () => {
-    console.log('Server running on http://127.0.0.1:5500');
-});
+app.use('/.netlify/functions/server', router);
+app.use(express.static(path.join(__dirname, 'public')));
+
+module.exports = app;
+module.exports.handler = serverless(app);
