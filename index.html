@@ -26,16 +26,20 @@
 
 <body>
 
-  <h1>
-    <span class="material-symbols-outlined logo" onclick="location.reload()">public</span>
-    <span class="header" onclick="location.reload()">NationHub</span>
-    <span class="material-symbols-outlined settings" onclick="showSettingsWindow()">settings</span>
-    <span id="dark-mode-toggle" class="material-symbols-outlined dark-mode-icon"
-      onclick="toggleDarkMode()">dark_mode</span>
-  </h1>
+  <div class="header-container">
+    <h1>
+      <span class="material-symbols-outlined logo" onclick="location.reload()">public</span>
+      <span class="header" onclick="location.reload()">NationHub</span>
+      <span class="material-symbols-outlined settings" onclick="showSettingsWindow()">settings</span>
+      <span id="dark-mode-toggle" class="material-symbols-outlined dark-mode-icon"
+        onclick="toggleDarkMode()">dark_mode</span>
+    </h1>
+
+    <input type="text" id="search-input" placeholder="Search country..." oninput="handleSearch()">
+  </div>
 
   <div class="about-container">
-    <a class="about-button" href="/aboutus.html">About Us</a>
+    <a class="about-button" href="/about.html">About Us</a>
   </div>
 
   <div class="table-container">
@@ -172,11 +176,12 @@
             <th class="country-column">
               <span>Country</span>
               <button class="sort-button" onclick="sortTable()">
-              <span id="sort-symbol" class="material-symbols-outlined sort-icon">switch_right</span>
+                <span id="sort-symbol" class="material-symbols-outlined sort-icon">switch_right</span>
               </button>
             </th>
           </tr>`;
         const imagePromises = [];
+        const fragment = document.createDocumentFragment();
         for (let i = startIndex; i < startIndex + countriesPerPage; i++) {
           const country = countries[i];
           if (!country) break;
@@ -190,8 +195,9 @@
           countryNameCell.textContent = countryName;
           row.appendChild(countryNameCell);
           row.addEventListener('click', () => bigCardToggle.checked ? showExpandedCountryInfo(row, country) : showCountryInfo(row, country));
-          countriesTable.appendChild(row);
+          fragment.appendChild(row);
         }
+        countriesTable.appendChild(fragment);
         const images = await Promise.all(imagePromises);
         const flagCells = Array.from(countriesTable.querySelectorAll('td:first-child'));
         flagCells.forEach((cell, index) => {
@@ -202,6 +208,15 @@
           img.alt = countries[startIndex + index].name.common + ' Flag';
           cell.appendChild(img);
         });
+      }
+
+      function handleSearch() {
+        const searchInput = document.getElementById('search-input');
+        const filterValue = searchInput.value.toLowerCase();
+        const visibleCountries = independentCountries.filter(country =>
+          country.name.common.toLowerCase().startsWith(filterValue)
+        );
+        renderCountriesTable(visibleCountries, currentPage);
       }
 
       function setCurrentPage(page) {

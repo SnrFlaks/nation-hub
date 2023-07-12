@@ -30,6 +30,13 @@ body.dark-mode {
     color: white;
 }
 
+.dark-mode .header-container input {
+    box-shadow: 0 0 25px rgba(255, 255, 255, 0.2);
+    background-color: #3d3d3d;
+    border: 2px solid #f0f0f0;
+    color: white;
+}
+
 .dark-mode h1 {
     box-shadow: 0 0 25px rgba(255, 255, 255, 0.2);
     background-color: #3d3d3d;
@@ -105,5 +112,6 @@ body.dark-mode {
 }
 
 .dark-mode .loader {
+    border: 4px solid #f3f3f3;
     filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.7));
 }
