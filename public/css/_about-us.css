@@ -1,0 +1,46 @@
+body {
+    text-align: center;
+}
+
+.about-us {
+    z-index: 0;
+    font-size: 36px;
+    left: 50%;
+    padding-left: 5px;
+    transform: translateX(-50%);
+}
+
+#github-logo-light,
+#github-logo-dark {
+    width: 18px;
+    height: 18px;
+}
+
+p {
+    font-size: 18px;
+    line-height: 1.5;
+    margin-bottom: 20px;
+}
+
+.social-link {
+    color: #337ab7;
+    text-decoration: none;
+}
+
+.social-link:hover {
+    text-decoration: underline;
+}
+
+ul {
+    list-style-type: none;
+    padding-left: 0;
+    margin-top: 0;
+    margin-bottom: 20px;
+}
+
+li::before {
+    color: #666;
+    display: inline-block;
+    width: 1em;
+    margin-left: -1em;
+}

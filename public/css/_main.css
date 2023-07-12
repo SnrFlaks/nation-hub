@@ -1,0 +1,321 @@
+body {
+    font-family: 'Roboto Mono', monospace;
+    background-color: #d1d1d1;
+}
+
+h1 {
+    display: flex;
+    align-items: center;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+    background-color: #f2f2f2;
+    border-radius: 10px;
+    border: 2px solid #333;
+    position: relative;
+    z-index: 2;
+    width: fit-content;
+    padding-right: 5px;
+}
+
+.logo {
+    color: rgb(28, 155, 11);
+    filter: drop-shadow(0 0 1rem rgb(28, 155, 11));
+    font-size: 48px;
+    cursor: pointer;
+    background-color: transparent;
+}
+
+.header {
+    font-size: 36px;
+    cursor: pointer;
+}
+
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    z-index: 1;
+    display: none;
+    backdrop-filter: blur(2px);
+}
+
+.settings {
+    font-size: 48px;
+    margin-right: 5px;
+    cursor: pointer;
+    position: fixed;
+    right: 10px;
+}
+
+.about-container {
+    position: fixed;
+    bottom: 10px;
+    right: 10px;
+    z-index: 2;
+}
+
+.about-button {
+    display: inline-block;
+    padding: 10px 20px;
+    background-color: #f2f2f2;
+    color: black;
+    text-decoration: none;
+    border-radius: 10px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+    border: 2px solid #333;
+    font-size: 18px;
+    margin-left: 10px;
+}
+
+.about-button:hover {
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.7);
+}
+
+.settings-title {
+    margin-top: 1px;
+    font-size: 36px;
+}
+
+.toggle-container {
+    display: flex;
+    align-items: center;
+}
+
+.toggle-icon {
+    width: 36px;
+    height: 36px;
+    margin-left: 15px;
+    cursor: pointer;
+    vertical-align: middle;
+}
+
+#settings-window,
+#map-window,
+#city-table {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 2;
+    background-color: #f2f2f2;
+    padding: 20px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+    border: 2px solid #333;
+    font-size: 18px;
+}
+
+.country-card {
+    position: fixed;
+    top: 50%;
+    left: 75%;
+    transform: translate(-50%, -50%);
+    line-height: 1;
+    background-color: #f2f2f2;
+    padding: 20px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+    border: 2px solid #333;
+}
+
+.country-card h2 {
+    display: flex;
+    align-items: center;
+    margin-top: 5px;
+}
+
+.country-card p {
+    margin-top: 7px;
+    margin-bottom: 7px;
+}
+
+.map-icon,
+.cities-icon,
+.wiki-icon {
+    margin-left: 5px;
+    cursor: pointer;
+}
+
+.wiki-icon {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    transform: scale(1.5);
+}
+
+.cities-wiki-icon {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#map-container {
+    width: 45vw;
+    height: 45vh;
+    border-radius: 10px;
+    border: 2px solid #333;
+}
+
+#map-buttons {
+    display: flex;
+    margin-bottom: 5px;
+}
+
+.map-button-icon {
+    width: 36px;
+    height: 36px;
+    vertical-align: middle;
+}
+
+#openstreetmap-button,
+#googlemaps-button {
+    padding: 5px;
+    background-color: #f2f2f2;
+    border-radius: 10px;
+    border: 2px solid #333;
+    cursor: pointer;
+}
+
+#cities-list {
+    border-radius: 10px;
+    border: 2px solid #333;
+    margin-bottom: 30px;
+}
+
+.neighboring-country-icon {
+    cursor: pointer;
+}
+
+.pagination {
+    position: fixed;
+    bottom: 20px;
+    left: 0;
+    right: 0;
+    z-index: 1;
+}
+
+.cities-pagination {
+    align-items: center;
+}
+
+.pagination,
+.cities-pagination {
+    display: flex;
+    justify-content: center;
+}
+
+.pagination-container,
+.cities-pagination-container {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.pagination button,
+.cities-pagination button {
+    margin: 0 5px;
+    padding: 5px 10px;
+    background-color: #f2f2f2;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.pagination button.active,
+.cities-pagination button.active {
+    background-color: #525252;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.6);
+    color: white;
+}
+
+.flag-column {
+    width: 5%;
+}
+
+.country-column {
+    width: 90%;
+}
+
+.country-column::after {
+    content: '';
+    display: inline-block;
+    height: 100%;
+    vertical-align: middle;
+}
+
+.country-column span {
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.sort-button {
+    border: none;
+    color: white;
+    background: none;
+    padding: 0;
+    cursor: pointer;
+}
+
+.sort-button span {
+    display: inline-block;
+    overflow: hidden;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+.sort-icon {
+    transform: rotate(270deg);
+}
+
+#expand-icon,
+#expand-icon-less {
+    font-size: 24px;
+    cursor: pointer;
+}
+
+.flag-coat {
+    display: flex;
+    align-items: center;
+}
+
+.flag-coat img {
+    height: 120px;
+    border-radius: 10px;
+    background-color: #f2f2f2;
+    border: 2px solid #333;
+}
+
+.flag-coat img.flag-image {
+    margin-right: 50px;
+}
+
+.flag-coat img.coat-image {
+    width: 120px;
+    object-fit: contain;
+    object-position: center;
+    min-width: 120px;
+}
+
+.close-icon {
+    font-size: 24px;
+    position: absolute;
+    top: 1px;
+    right: 1px;
+    cursor: pointer;
+}
+
+.gdp-growth {
+    font-weight: bold;
+}
+
+.gdp-growth.positive {
+    color: green;
+}
+
+.gdp-growth.negative {
+    color: red;
+}

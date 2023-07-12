@@ -11,558 +11,17 @@
   <meta name="keywords" content="countries, world, capitals, languages, populations, facts, information">
   <meta name="author" content="flAks">
   <link rel="icon" type="image/png" href="/images/favicon-32x32.png">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  <link async rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
     integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-  <link rel="stylesheet"
+  <link rel="stylesheet" async
     href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@48,400,0,0" />
-  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono&display=swap" rel="stylesheet">
-  <style>
-    table {
-      border-collapse: collapse;
-      width: 100%;
-      box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
-      border-spacing: 0;
-      border-collapse: separate;
-    }
-
-    .dark-mode table {
-      box-shadow: 0 0 25px rgba(255, 255, 255, 0.1);
-    }
-
-    table th,
-    table td {
-      text-align: left;
-      padding: 7px;
-    }
-
-    table tr:first-child {
-      background-color: #525252;
-      color: white;
-    }
-
-    .dark-mode table tr:first-child {
-      background-color: #cacaca;
-      color: black;
-    }
-
-    table tr:not(:first-child) {
-      transition: transform 0.3s ease;
-    }
-
-    table tr:not(:first-child):hover,
-    tr.selected {
-      cursor: pointer;
-      transform: scale(1.1);
-      filter: drop-shadow(0 0 5px rgba(0, 0, 0, 0.7));
-    }
-
-    .dark-mode table tr:not(:first-child):hover,
-    .dark-mode tr.selected {
-      filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.7));
-    }
-
-    table tr:first-child th:first-child {
-      border-top-left-radius: 6px;
-    }
-
-    table tr:first-child th:last-child {
-      border-top-right-radius: 6px;
-    }
-
-    table tr:last-child td:first-child {
-      border-bottom-left-radius: 10px;
-    }
-
-    table tr:last-child td:last-child {
-      border-bottom-right-radius: 10px;
-    }
-
-    table tr:not(:first-child):nth-child(odd) {
-      background-color: #f8f8f8;
-    }
-
-    .dark-mode tr:not(:first-child):nth-child(odd) {
-      background-color: #585858;
-    }
-
-    table tr:nth-child(even) {
-      background-color: #e6e6e6;
-    }
-
-    .dark-mode table tr:nth-child(even) {
-      background-color: #474747;
-    }
-
-    .table-container {
-      margin-left: 5%;
-      box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
-      border-radius: 10px;
-      border: 2px solid #333;
-      border-spacing: 0;
-      border-collapse: separate;
-      width: 25%;
-    }
-
-    .dark-mode .table-container {
-      box-shadow: 0 0 25px rgba(255, 255, 255, 0.1);
-      border: 2px solid #f0f0f0;
-    }
-
-    body {
-      font-family: 'Roboto Mono', monospace;
-      background-color: #d1d1d1;
-    }
-
-    body.dark-mode {
-      background-color: #242424;
-      color: white;
-    }
-
-    h1 {
-      display: flex;
-      align-items: center;
-      box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
-      background-color: #f2f2f2;
-      border-radius: 10px;
-      border: 2px solid #333;
-      position: relative;
-      z-index: 999;
-      width: fit-content;
-      padding-right: 5px;
-    }
-
-    .dark-mode h1 {
-      box-shadow: 0 0 25px rgba(255, 255, 255, 0.2);
-      background-color: #3d3d3d;
-      border: 2px solid #f0f0f0;
-    }
-
-    .logo {
-      color: rgb(28, 155, 11);
-      filter: drop-shadow(0 0 1rem rgb(28, 155, 11));
-      font-size: 48px;
-      cursor: pointer;
-      background-color: transparent;
-    }
-
-    .header {
-      font-size: 36px;
-      cursor: pointer;
-    }
-
-    .overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0, 0, 0, 0.7);
-      z-index: 998;
-      display: none;
-      backdrop-filter: blur(2px);
-    }
-
-    .dark-mode-icon {
-      font-size: 36px;
-      margin-right: 64px;
-      cursor: pointer;
-      position: fixed;
-      right: 10px;
-    }
-
-    .settings {
-      font-size: 48px;
-      margin-right: 5px;
-      cursor: pointer;
-      position: fixed;
-      right: 10px;
-    }
-
-    .about-container {
-      position: fixed;
-      bottom: 10px;
-      right: 10px;
-      z-index: 999;
-    }
-
-    .about-button {
-      display: inline-block;
-      padding: 10px 20px;
-      background-color: #0b8100;
-      color: white;
-      text-decoration: none;
-      border-radius: 5px;
-      font-size: 18px;
-      margin-left: 10px;
-    }
-
-    .about-button:hover {
-      background-color: #085a00;
-    }
-
-    .settings-title {
-      margin-top: 1px;
-      font-size: 36px;
-    }
-
-    .toggle-container {
-      display: flex;
-      align-items: center;
-    }
-
-    .toggle-icon {
-      width: 36px;
-      height: 36px;
-      margin-left: 15px;
-      cursor: pointer;
-      vertical-align: middle;
-    }
-
-    #settings-window,
-    #map-window,
-    #city-table {
-      display: none;
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      z-index: 999;
-      background-color: #f2f2f2;
-      padding: 20px;
-      box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
-      border-radius: 10px;
-      border: 2px solid #333;
-      font-size: 18px;
-    }
-
-    .dark-mode #settings-window,
-    .dark-mode #map-window,
-    .dark-mode #city-table {
-      background-color: #3d3d3d;
-      box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
-      border: 2px solid #f0f0f0;
-    }
-
-    .country-card {
-      position: fixed;
-      top: 50%;
-      left: 75%;
-      transform: translate(-50%, -50%);
-      line-height: 1;
-      background-color: #f2f2f2;
-      padding: 20px;
-      box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
-      border-radius: 10px;
-      border: 2px solid #333;
-    }
-
-    .dark-mode .country-card {
-      background-color: #3d3d3d;
-      box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
-      border: 2px solid #f0f0f0;
-    }
-
-    .country-card h2 {
-      display: flex;
-      align-items: center;
-      margin-top: 5px;
-    }
-
-    .country-card p {
-      margin-top: 7px;
-      margin-bottom: 7px;
-    }
-
-    .map-icon,
-    .cities-icon,
-    .wiki-icon {
-      margin-left: 5px;
-      cursor: pointer;
-    }
-
-    .wiki-icon {
-      position: absolute;
-      bottom: 10px;
-      right: 10px;
-      transform: scale(1.5);
-    }
-
-    .cities-wiki-icon {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-
-    .dark-mode .wiki-icon,
-    .dark-mode .cities-wiki-icon {
-      filter: invert(100%);
-    }
-
-    #map-container {
-      width: 45vw;
-      height: 45vh;
-      border-radius: 10px;
-      border: 2px solid #333;
-    }
-
-    .dark-mode #map-container {
-      border: 2px solid #f0f0f0;
-    }
-
-    #map-buttons {
-      display: flex;
-      margin-bottom: 5px;
-    }
-
-    .map-button-icon {
-      width: 36px;
-      height: 36px;
-      vertical-align: middle;
-    }
-
-    #openstreetmap-button,
-    #googlemaps-button {
-      padding: 5px;
-      background-color: #f2f2f2;
-      border-radius: 10px;
-      border: 2px solid #333;
-      cursor: pointer;
-    }
-
-    #cities-list {
-      border-radius: 10px;
-      border: 2px solid #333;
-      margin-bottom: 30px;
-    }
-
-    .dark-mode #cities-list {
-      border: 2px solid #f0f0f0;
-    }
-
-    .neighboring-country-icon {
-      cursor: pointer;
-    }
-
-    .pagination {
-      position: fixed;
-      bottom: 20px;
-      left: 0;
-      right: 0;
-    }
-
-    .cities-pagination {
-      align-items: center;
-    }
-
-    .pagination,
-    .cities-pagination {
-      display: flex;
-      justify-content: center;
-    }
-
-    .pagination-container,
-    .cities-pagination-container {
-      display: flex;
-      justify-content: center;
-      flex-wrap: wrap;
-    }
-
-    .pagination button,
-    .cities-pagination button {
-      margin: 0 5px;
-      padding: 5px 10px;
-      background-color: #f2f2f2;
-      box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-
-    .pagination button.active,
-    .cities-pagination button.active {
-      background-color: #525252;
-      box-shadow: 0 0 15px rgba(0, 0, 0, 0.6);
-      color: white;
-    }
-
-    .dark-mode .pagination button,
-    .dark-mode .cities-pagination button {
-      color: white;
-      background-color: #525252;
-      box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
-    }
-
-    .dark-mode .pagination button.active,
-    .dark-mode .cities-pagination button.active {
-      background-color: #f2f2f2;
-      box-shadow: 0 0 15px rgba(255, 255, 255, 0.6);
-      color: black;
-    }
-
-    .flag-column {
-      width: 5%;
-    }
-
-    .country-column {
-      width: 90%;
-    }
-
-    .country-column::after {
-      content: '';
-      display: inline-block;
-      height: 100%;
-      vertical-align: middle;
-    }
-
-    .country-column span {
-      display: inline-block;
-      vertical-align: middle;
-    }
-
-    .sort-button {
-      border: none;
-      color: white;
-      background: none;
-      padding: 0;
-      cursor: pointer;
-    }
-
-    .dark-mode .sort-button {
-      color: black;
-    }
-
-    .sort-button span {
-      display: inline-block;
-      overflow: hidden;
-      background-repeat: no-repeat;
-      background-position: center;
-    }
-
-    .sort-icon {
-      transform: rotate(270deg);
-    }
-
-    #expand-icon,
-    #expand-icon-less {
-      font-size: 24px;
-      cursor: pointer;
-    }
-
-    .flag-coat {
-      display: flex;
-      align-items: center;
-    }
-
-    .flag-coat img {
-      height: 120px;
-      border-radius: 10px;
-      background-color: #f2f2f2;
-      border: 2px solid #333;
-    }
-
-    .dark-mode .flag-coat img {
-      border: 2px solid #f0f0f0;
-    }
-
-    .flag-coat img.flag-image {
-      margin-right: 50px;
-    }
-
-    .flag-coat img.coat-image {
-      width: 120px;
-      object-fit: contain;
-      object-position: center;
-      min-width: 120px;
-    }
-
-    .close-icon {
-      font-size: 24px;
-      position: absolute;
-      top: 1px;
-      right: 1px;
-      cursor: pointer;
-    }
-
-    .gdp-growth {
-      font-weight: bold;
-    }
-
-    .gdp-growth.positive {
-      color: green;
-    }
-
-    .gdp-growth.negative {
-      color: red;
-    }
-
-    .loader {
-      display: inline-block;
-      width: 30px;
-      height: 30px;
-      border: 4px solid #f3f3f3;
-      border-top: 4px solid #00000000;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      filter: drop-shadow(0 0 5px rgba(0, 0, 0, 0.7));
-    }
-
-    .dark-mode .loader {
-      filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.7));
-    }
-
-    @keyframes spin {
-      0% {
-        transform: rotate(0deg);
-      }
-
-      100% {
-        transform: rotate(360deg);
-      }
-    }
-
-    @media (orientation: portrait) {
-      .table-container {
-        width: 90%;
-      }
-
-      #settings-window,
-      #city-table {
-        font-size: calc(18px + (100vh - 100vw) / 100);
-      }
-
-      .toggle-icon {
-        width: calc(36px + (100vh - 100vw) / 50);
-        height: calc(36px + (100vh - 100vw) / 50);
-      }
-
-      .close-icon,
-      #expand-icon {
-        font-size: calc(24px + (100vh - 100vw) / 100);
-      }
-
-      .country-card h2 {
-        font-size: calc(24px + (100vh - 100vw) / 100);
-      }
-
-      .country-card p {
-        font-size: calc(18px + (100vh - 100vw) / 100);
-        margin-bottom: 0;
-      }
-
-      .country-card {
-        top: auto;
-        bottom: 10%;
-        left: 50%;
-        transform: translateX(-50%);
-      }
-
-      .pagination button,
-      .cities-pagination button {
-        font-size: calc(16px + (100vh - 100vw) / 100);
-        padding: 5px 10px;
-      }
-    }
-  </style>
+  <link async href="https://fonts.googleapis.com/css2?family=Roboto+Mono&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/_dark-mode.css">
+  <link rel="stylesheet" href="/css/_spinner.css">
+  <link rel="stylesheet" href="/css/_main.css">
+  <link rel="stylesheet" href="/css/_table.css">
+  <link rel="stylesheet" href="/css/_portrait-orientation.css">
+  <link rel="stylesheet" href="/css/_spinner.css">
 </head>
 
 <body>
@@ -576,7 +35,7 @@
   </h1>
 
   <div class="about-container">
-    <a class="about-button" href="aboutus.html">About Us</a>
+    <a class="about-button" href="/aboutus">About Us</a>
   </div>
 
   <div class="table-container">
@@ -837,13 +296,14 @@
         }
       }
 
-      function showCountryInfo(row, country) {
+      async function showCountryInfo(row, country) {
         if (!(openCountryRow && openCountryRow.rowElement === row)) {
           hideCountryInfo();
           const countryCard = document.createElement('div');
           countryCard.classList.add('country-card');
+          const flagImage = await loadResource(`https://flagcdn.com/h120/${getCountryCode(country)}.png`, 'image');
           countryCard.innerHTML = `
-            <img src="https://flagcdn.com/h120/${getCountryCode(country)}.png" height="120" width="190" alt="${country.name.common} Flag">
+            <img src="${flagImage.src}" height="120" width="190" alt="${country.name.common} Flag">
             <span class="material-symbols-outlined close-icon">close</span>
             <h2>${country.name.common}</h2>
             <p><strong>Capital:</strong> ${country.capital}</p>
@@ -977,6 +437,7 @@
             if (cachedData.status && cachedData.status.value === 19) {
               throw new Error('Request limit exceeded');
             }
+            console.log(cachedData);
             processCityData(cachedData);
           })
           .catch(error => {
@@ -984,9 +445,8 @@
             cityTable.innerHTML = '<div class="error-message">Sorry, an error occurred while fetching city data. Please try again later.</div>';
           });
 
-        function processCityData({ cities, cityDataArray }) {
-          console.log(cities, " ", cityDataArray);
-          const filteredCities = cityDataArray.filter((cityData) => cityData.population > 0).sort((a, b) => b.population - a.population);
+        function processCityData({ geonames }) {
+          const filteredCities = geonames.filter((cityData) => cityData.population > 0).sort((a, b) => b.population - a.population);
           const citiesPerPage = countriesPerPage > 15 ? 15 : countriesPerPage;
           const totalPages = Math.ceil(filteredCities.length / citiesPerPage);
           const divContainer = document.createElement('div');
@@ -1187,11 +647,16 @@
                 } else {
                   response.text().then(data => {
                     try {
+                      const parsedData = JSON.parse(data);
+                      if (parsedData.status && parsedData.status.value === 19) {
+                        throw new Error('Request limit exceeded');
+                      }
                       localStorage.setItem(url, data);
+                      resolve(data);
                     } catch (error) {
                       console.error('Failed to store resource in local storage:', error);
+                      reject(error);
                     }
-                    resolve(data);
                   });
                 }
               })

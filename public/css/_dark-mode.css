@@ -1,0 +1,109 @@
+.dark-mode table {
+    box-shadow: 0 0 25px rgba(255, 255, 255, 0.1);
+}
+
+.dark-mode table tr:first-child {
+    background-color: #cacaca;
+    color: black;
+}
+
+.dark-mode table tr:not(:first-child):hover,
+.dark-mode tr.selected {
+    filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.7));
+}
+
+.dark-mode tr:not(:first-child):nth-child(odd) {
+    background-color: #585858;
+}
+
+.dark-mode table tr:nth-child(even) {
+    background-color: #474747;
+}
+
+.dark-mode .table-container {
+    box-shadow: 0 0 25px rgba(255, 255, 255, 0.1);
+    border: 2px solid #f0f0f0;
+}
+
+body.dark-mode {
+    background-color: #242424;
+    color: white;
+}
+
+.dark-mode h1 {
+    box-shadow: 0 0 25px rgba(255, 255, 255, 0.2);
+    background-color: #3d3d3d;
+    border: 2px solid #f0f0f0;
+}
+
+.dark-mode-icon {
+    font-size: 36px;
+    margin-right: 64px;
+    cursor: pointer;
+    position: fixed;
+    right: 10px;
+}
+
+.dark-mode .about-button {
+    background-color: #3d3d3d;
+    color: white;
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+    border: 2px solid #f0f0f0;
+}
+
+.dark-mode .about-button:hover {
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.8);
+}
+
+.dark-mode #settings-window,
+.dark-mode #map-window,
+.dark-mode #city-table {
+    background-color: #3d3d3d;
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+    border: 2px solid #f0f0f0;
+}
+
+.dark-mode .country-card {
+    background-color: #3d3d3d;
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+    border: 2px solid #f0f0f0;
+}
+
+.dark-mode .wiki-icon,
+.dark-mode .cities-wiki-icon {
+    filter: invert(100%);
+}
+
+.dark-mode #map-container {
+    border: 2px solid #f0f0f0;
+}
+
+.dark-mode #cities-list {
+    border: 2px solid #f0f0f0;
+}
+
+.dark-mode .pagination button,
+.dark-mode .cities-pagination button {
+    color: white;
+    background-color: #525252;
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
+}
+
+.dark-mode .pagination button.active,
+.dark-mode .cities-pagination button.active {
+    background-color: #f2f2f2;
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.6);
+    color: black;
+}
+
+.dark-mode .sort-button {
+    color: black;
+}
+
+.dark-mode .flag-coat img {
+    border: 2px solid #f0f0f0;
+}
+
+.dark-mode .loader {
+    filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.7));
+}

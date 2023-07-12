@@ -1,0 +1,42 @@
+@media (orientation: portrait) {
+    .table-container {
+        width: 90%;
+    }
+
+    #settings-window,
+    #city-table {
+        font-size: calc(18px + (100vh - 100vw) / 100);
+    }
+
+    .toggle-icon {
+        width: calc(36px + (100vh - 100vw) / 50);
+        height: calc(36px + (100vh - 100vw) / 50);
+    }
+
+    .close-icon,
+    #expand-icon {
+        font-size: calc(24px + (100vh - 100vw) / 100);
+    }
+
+    .country-card h2 {
+        font-size: calc(24px + (100vh - 100vw) / 100);
+    }
+
+    .country-card p {
+        font-size: calc(18px + (100vh - 100vw) / 100);
+        margin-bottom: 0;
+    }
+
+    .country-card {
+        top: auto;
+        bottom: 10%;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+
+    .pagination button,
+    .cities-pagination button {
+        font-size: calc(16px + (100vh - 100vw) / 100);
+        padding: 5px 10px;
+    }
+}
