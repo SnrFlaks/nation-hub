@@ -153,16 +153,19 @@
           const distanceToCenter = screenHeight / 2 - (h1Rect.top + h1Rect.height);
           const fontSize = 16 + heightDifference / 100;
           document.body.style.fontSize = fontSize + 'px';
-          return Math.floor(distanceToCenter / 58);
+          const count = Math.floor(distanceToButtons / 58);
+          return count > 1 ? count : 1;
         } else {
           document.body.style.fontSize = '16px';
-          return Math.floor(distanceToButtons / 42.65);
+          const count = Math.floor(distanceToButtons / 42.65);
+          return count > 1 ? count : 1;
         }
       }
 
       window.addEventListener('resize', function () {
         countriesPerPage = calculateCountriesPerPage();
-        renderPagination(Math.ceil(independentCountries.length / countriesPerPage));
+        console.log(countriesPerPage, " ", Math.ceil(independentCountries.length / countriesPerPage));
+        filterCountriesByRegion();
         if (mapWindow && mapWindow.style.display === 'block') {
           hideMapOfCountry();
         }
@@ -173,7 +176,6 @@
           hideFilterWindow();
         }
         hideCountryInfo();
-        setCurrentPage(1);
       });
 
       function fetchCountries() {
@@ -250,21 +252,7 @@
         );
         renderCountriesTable(visibleCountries, currentPage);
       }
-
-      regionToggleLabels.forEach(function (toggleLabel, index) {
-        const toggleIcon = toggleLabel.querySelector('.toggle-icon');
-        const regionToggle = regionToggles[index];
-        toggleLabel.addEventListener('click', function () {
-          regionToggle.checked = !regionToggle.checked;
-          toggleIcon.src = regionToggle.checked ? '/images/toggle_on.svg' : '/images/toggle_off.svg';
-          localStorage.setItem(regionToggle[index], regionToggle.checked);
-        });
-        const initialRegionToggleValue = localStorage.getItem(regionToggle[index]);
-        const initialToggleState = initialRegionToggleValue ? initialRegionToggleValue === 'true' : false;
-        regionToggle.checked = initialToggleState;
-        toggleIcon.src = initialToggleState ? '/images/toggle_on.svg' : '/images/toggle_off.svg';
-      });
-
+      
       function filterCountriesByRegion() {
         const selectedRegions = Array.from(regionToggles)
           .filter(checkbox => checkbox.checked)
@@ -745,12 +733,16 @@
           toggleLabel.addEventListener('click', function () {
             regionToggle.checked = !regionToggle.checked;
             toggleIcon.src = regionToggle.checked ? '/images/toggle_on.svg' : '/images/toggle_off.svg';
+            localStorage.setItem(`regionToggle${index}`, regionToggle.checked);
           });
           const initialRegionToggleValue = localStorage.getItem(`regionToggle${index}`);
-          const initialToggleState = initialRegionToggleValue ? initialRegionToggleValue === 'true' : false;
+          const initialToggleState = initialRegionToggleValue ? initialRegionToggleValue === 'true' : true;
           regionToggle.checked = initialToggleState;
           toggleIcon.src = initialToggleState ? '/images/toggle_on.svg' : '/images/toggle_off.svg';
           toggleStates[index] = initialToggleState;
+          if (!initialRegionToggleValue) {
+            localStorage.setItem(`regionToggle${index}`, true);
+          }
         });
         fetchCountries();
       });
