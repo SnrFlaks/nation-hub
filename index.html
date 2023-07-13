@@ -36,6 +36,7 @@
     </h1>
 
     <input type="text" id="search-input" placeholder="Search country..." oninput="handleSearch()">
+    <button class="filter-button" onclick="showFilterWindow()">Filter</button>
   </div>
 
   <div class="about-container">
@@ -56,6 +57,32 @@
     </table>
 
     <div class="overlay"></div>
+
+    <div id="filter-window">
+      <h2 class="filter-title">Filter Settings</h2>
+      <div class="parameter-container">
+        <h3>Region</h3>
+        <div class="toggle-container" id="region-toggle-container">
+          <script>
+            const regions = ['Africa', 'Americas', 'Asia', 'Europe', 'Oceania'];
+            const regionToggleContainer = document.getElementById('region-toggle-container');
+            regionToggleContainer.innerHTML = regions.map(region => `
+              <div class="toggle-item">
+                <strong>${region}:</strong>
+                <label class="toggle-label" for="region-filter-toggle-${region.toLowerCase()}">
+                  <input type="checkbox" id="region-filter-toggle-${region.toLowerCase()}" hidden>
+                  <img class="toggle-icon" src="/images/toggle_off.svg" alt="Toggle Icon">
+                </label>
+              </div>`).join('');
+          </script>
+        </div>
+      </div>
+      <div class="button-container">
+        <button id="reset-filter-button" class="reset-button" onclick="resetFilters()">Reset Filters</button>
+        <button id="apply-filter-button" class="apply-button" onclick="filterCountriesByRegion()">Apply Filter</button>
+      </div>
+      <span class="material-symbols-outlined close-icon">close</span>
+    </div>
 
     <div id="settings-window">
       <h2 class="settings-title">Settings</h2>
@@ -101,12 +128,20 @@
       const overlay = document.querySelector('.overlay');
       const countryNameElement = document.getElementById('country-name');
       const darkModeToggle = document.getElementById('dark-mode-toggle');
+      const filterWindow = document.getElementById('filter-window');
       const settingsWindow = document.getElementById('settings-window');
       const sortButton = document.querySelector('.sort-button');
+      const regionToggleLabels = document.querySelectorAll('#filter-window .toggle-label');
+      const regionToggles = document.querySelectorAll('input[type="checkbox"][id^="region-filter-toggle-"]');
 
+      let bigCardToggle;
+      let map = null;
+      let marker = null;
       let sortOrder = true;
       let currentPage = 1;
       let totalPages = 1;
+      let toggleStates = [];
+      let filteredCountries = [];
       let independentCountries = [];
       let countriesPerPage = calculateCountriesPerPage();
       function calculateCountriesPerPage() {
@@ -145,12 +180,7 @@
           .then(data => {
             independentCountries = data.filter(country => country.independent);
             independentCountries.sort((a, b) => a.name.common.localeCompare(b.name.common));
-            totalPages = Math.ceil(independentCountries.length / countriesPerPage);
-            currentPage = 1;
-            renderPagination(totalPages);
-            if (currentPage === 1) {
-              renderCountriesTable(independentCountries, currentPage);
-            }
+            filterCountriesByRegion();
           })
           .catch(error => console.log('Error:', error));
       }
@@ -183,16 +213,16 @@
         const imagePromises = [];
         const fragment = document.createDocumentFragment();
         for (let i = startIndex; i < startIndex + countriesPerPage; i++) {
-          const country = countries[i];
+          const country = filteredCountries[i];
           if (!country) break;
           const countryName = country.name.common;
           const row = document.createElement('tr');
           const imagePromise = loadResource(`https://flagcdn.com/24x18/${getCountryCode(country)}.png`, 'image');
           imagePromises.push(imagePromise);
           const imageCell = document.createElement('td');
-          row.appendChild(imageCell);
           const countryNameCell = document.createElement('td');
           countryNameCell.textContent = countryName;
+          row.appendChild(imageCell);
           row.appendChild(countryNameCell);
           row.addEventListener('click', () => bigCardToggle.checked ? showExpandedCountryInfo(row, country) : showCountryInfo(row, country));
           fragment.appendChild(row);
@@ -205,7 +235,7 @@
           img.src = images[index].src;
           img.width = 24;
           img.height = 18;
-          img.alt = countries[startIndex + index].name.common + ' Flag';
+          img.alt = filteredCountries[startIndex + index].name.common + 'Flag';
           cell.appendChild(img);
         });
       }
@@ -217,6 +247,44 @@
           country.name.common.toLowerCase().startsWith(filterValue)
         );
         renderCountriesTable(visibleCountries, currentPage);
+      }
+
+      regionToggleLabels.forEach(function (toggleLabel, index) {
+        const toggleIcon = toggleLabel.querySelector('.toggle-icon');
+        const regionToggle = regionToggles[index];
+        toggleLabel.addEventListener('click', function () {
+          regionToggle.checked = !regionToggle.checked;
+          toggleIcon.src = regionToggle.checked ? '/images/toggle_on.svg' : '/images/toggle_off.svg';
+          localStorage.setItem(regionToggle[index], regionToggle.checked);
+        });
+        const initialRegionToggleValue = localStorage.getItem(regionToggle[index]);
+        const initialToggleState = initialRegionToggleValue ? initialRegionToggleValue === 'true' : false;
+        regionToggle.checked = initialToggleState;
+        toggleIcon.src = initialToggleState ? '/images/toggle_on.svg' : '/images/toggle_off.svg';
+      });
+
+      function filterCountriesByRegion() {
+        const selectedRegions = Array.from(regionToggles)
+          .filter(checkbox => checkbox.checked)
+          .map(checkbox => checkbox.id.split('-').pop().toUpperCase());
+        filteredCountries = independentCountries.filter(country =>
+          selectedRegions.includes(country.region.toUpperCase())
+        );
+        totalPages = Math.ceil(filteredCountries.length / countriesPerPage);
+        currentPage = 1;
+        renderPagination(totalPages);
+        renderCountriesTable(filteredCountries, currentPage);
+        regionToggles.forEach((regionToggle, index) => {
+          const toggleIcon = regionToggleLabels[index].querySelector('.toggle-icon');
+          toggleStates[index] = regionToggle.checked;
+          localStorage.setItem(`regionToggle${index}`, regionToggle.checked);
+          toggleIcon.src = regionToggle.checked ? '/images/toggle_on.svg' : '/images/toggle_off.svg';
+        });
+      }
+
+      function resetFilters() {
+        regionToggles.forEach(checkbox => checkbox.checked = true);
+        filterCountriesByRegion();
       }
 
       function setCurrentPage(page) {
@@ -382,9 +450,6 @@
           openExpandedCountryRow = null;
         }
       }
-
-      let map = null;
-      let marker = null;
 
       function showMapOfCountry(countryName) {
         const country = independentCountries.find(country => country.name.common === countryName);
@@ -566,11 +631,10 @@
 
       function sortTable() {
         toggleSortOrder();
-        independentCountries.reverse();
-        renderCountriesTable(independentCountries, currentPage);
+        filteredCountries.reverse();
+        renderCountriesTable(filteredCountries, currentPage);
         updateSortButton();
       }
-
       function toggleSortOrder() {
         sortOrder = !sortOrder;
         const sortSymbol = document.getElementById('sort-symbol');
@@ -586,6 +650,32 @@
       function openCountryWiki(countryName) {
         const wikiUrl = `https://en.wikipedia.org/wiki/${countryName}`;
         window.open(wikiUrl, '_blank');
+      }
+
+      function showFilterWindow() {
+        filterWindow.style.display = 'block';
+        overlay.style.display = 'block';
+        const closeButton = filterWindow.querySelector('.close-icon');
+        closeButton.addEventListener('click', hideFilterWindow);
+        overlay.addEventListener('click', hideFilterWindow);
+        regionToggleLabels.forEach((toggleLabel, index) => {
+          const toggleIcon = toggleLabel.querySelector('.toggle-icon');
+          const regionToggle = regionToggles[index];
+          toggleLabel.addEventListener('click', function () {
+            regionToggle.checked = !regionToggle.checked;
+            toggleIcon.src = regionToggle.checked ? '/images/toggle_on.svg' : '/images/toggle_off.svg';
+          });
+          const initialRegionToggleValue = localStorage.getItem(`regionToggle${index}`);
+          const initialToggleState = initialRegionToggleValue ? initialRegionToggleValue === 'true' : false;
+          regionToggle.checked = initialToggleState;
+          toggleIcon.src = initialToggleState ? '/images/toggle_on.svg' : '/images/toggle_off.svg';
+          toggleStates[index] = initialToggleState;
+        });
+      }
+
+      function hideFilterWindow() {
+        overlay.style.display = 'none';
+        filterWindow.style.display = 'none';
       }
 
       function toggleDarkMode() {
@@ -609,15 +699,19 @@
         if (cityTable && cityTable.style.display === 'block') {
           hideCountryCitiesTable();
         }
+        if (filterWindow && filterWindow.style.display === 'block') {
+          hideCountryCitiesTable();
+        }
         settingsWindow.style.display = 'block';
         overlay.style.display = 'block';
         const closeButton = settingsWindow.querySelector('.close-icon');
         closeButton.addEventListener('click', hideSettingsWindow);
         overlay.addEventListener('click', hideSettingsWindow);
-        function hideSettingsWindow() {
-          overlay.style.display = 'none';
-          settingsWindow.style.display = 'none';
-        }
+      }
+
+      function hideSettingsWindow() {
+        overlay.style.display = 'none';
+        settingsWindow.style.display = 'none';
       }
 
       function loadResource(url, resourceType, options = {}) {
@@ -685,8 +779,6 @@
         if (countryCard) countryCard.innerHTML = 'Failed to fetch country information.';
       }
 
-      let bigCardToggle;
-
       document.addEventListener('DOMContentLoaded', function () {
         toggleSortOrder();
         updateSortButton();
@@ -700,18 +792,31 @@
           document.body.classList.add('light-mode');
         }
         bigCardToggle = document.getElementById('big-card-toggle');
-        const toggleIcon = document.querySelector('.toggle-icon');
-        const toggleLabel = document.querySelector('.toggle-label');
-        toggleLabel.addEventListener('click', function () {
+        const bigCardToggleIcon = document.querySelector('#settings-window .toggle-icon');
+        const bigCardToggleLabel = document.querySelector('#settings-window .toggle-label');
+        bigCardToggleLabel.addEventListener('click', function () {
           bigCardToggle.checked = !bigCardToggle.checked;
-          toggleIcon.src = bigCardToggle.checked ? '/images/toggle_on.svg' : '/images/toggle_off.svg';
+          bigCardToggleIcon.src = bigCardToggle.checked ? '/images/toggle_on.svg' : '/images/toggle_off.svg';
           localStorage.setItem('bigCardToggle', bigCardToggle.checked);
         });
         const initialBigCardValue = localStorage.getItem('bigCardToggle');
         if (initialBigCardValue) {
           bigCardToggle.checked = initialBigCardValue === 'true';
         }
-        toggleIcon.src = bigCardToggle.checked ? '/images/toggle_on.svg' : '/images/toggle_off.svg';
+        bigCardToggleIcon.src = bigCardToggle.checked ? '/images/toggle_on.svg' : '/images/toggle_off.svg';
+        regionToggleLabels.forEach((toggleLabel, index) => {
+          const toggleIcon = toggleLabel.querySelector('.toggle-icon');
+          const regionToggle = regionToggles[index];
+          toggleLabel.addEventListener('click', function () {
+            regionToggle.checked = !regionToggle.checked;
+            toggleIcon.src = regionToggle.checked ? '/images/toggle_on.svg' : '/images/toggle_off.svg';
+          });
+          const initialRegionToggleValue = localStorage.getItem(`regionToggle${index}`);
+          const initialToggleState = initialRegionToggleValue ? initialRegionToggleValue === 'true' : false;
+          regionToggle.checked = initialToggleState;
+          toggleIcon.src = initialToggleState ? '/images/toggle_on.svg' : '/images/toggle_off.svg';
+          toggleStates[index] = initialToggleState;
+        });
         fetchCountries();
       });
     </script>
