@@ -2,6 +2,14 @@ body {
     text-align: center;
 }
 
+body::before {
+    background-color: rgba(0, 0, 0, 0.8);
+}
+
+.text-content {
+    color: white;
+}
+
 .about-us {
     z-index: 0;
     font-size: 36px;
@@ -10,8 +18,7 @@ body {
     transform: translateX(-50%);
 }
 
-#github-logo-light,
-#github-logo-dark {
+#github-logo {
     width: 18px;
     height: 18px;
 }

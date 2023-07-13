@@ -18,7 +18,7 @@
 </head>
 
 <body>
-    <h1 class="title">
+    <h1>
         <span class="material-symbols-outlined logo" onclick="window.location.href='/'">public</span>
         <span class="header" onclick="window.location.href='/'">NationHub</span>
         <span class="material-symbols-outlined settings" onclick="showSettingsWindow()">settings</span>
@@ -38,75 +38,73 @@
         </div>
         <span class="material-symbols-outlined close-icon">close</span>
     </div>
-    <p>
-        Welcome to NationHub, a platform developed by
-        <a class="social-link" href="https://github.com/SnrFlaks">
-            <img src="images/github-mark.svg" alt="GitHub" id="github-logo-light">
-            <img src="images/github-mark-white.svg" alt="GitHub" id="github-logo-dark">
-            flAks
-        </a>, a dedicated developer with a passion for promoting global
-        awareness and understanding.
-        Our platform offers a unique opportunity to explore countries from around the world, including their capitals,
-        languages, populations, and more.
-        By providing interesting and informative information about each country, our goal is to broaden your knowledge
-        and understanding of the world.
-    </p>
-    <p>
-        At NationHub, our mission is to create a user-friendly and engaging experience that allows you to dive into the
-        diverse cultures and characteristics
-        of countries across the globe. We believe that learning about different nations should be accessible and
-        enjoyable for everyone.
-    </p>
-    <p>
-        To gather and present country data, NationHub relies on the following APIs:
-    </p>
-    <ul>
-        <li>
-            <a class="social-link" href="https://restcountries.com/">Rest Countries API</a> - Provides comprehensive
-            information about
-            countries, including their names,
-            capitals, languages, populations, and more.
-        </li>
-        <li>
-            <a class="social-link" href="https://api-ninjas.com/">API Ninjas</a> - Offers additional data such as GDP,
-            GDP per capita,
-            and currency exchange rates for countries.
-        </li>
-        <li>
-            <a class="social-link" href="https://www.geonames.org/">GeoNames API</a> - Enables the retrieval of city
-            data for each
-            country, including city names and populations.
-        </li>
-    </ul>
-    <p>
-        Through NationHub, flAks aspires to create a platform that fosters curiosity and appreciation for the countries
-        of the world, ultimately contributing
-        to a more interconnected global community.
-    </p>
+    <div class="text-content">
+        <p>
+            Welcome to NationHub, a platform developed by
+            <a class="social-link" href="https://github.com/SnrFlaks">
+                <img src="images/github-mark-white.svg" alt="GitHub" id="github-logo">
+                flAks
+            </a>, a dedicated developer with a passion for promoting global
+            awareness and understanding.
+            Our platform offers a unique opportunity to explore countries from around the world, including their
+            capitals,
+            languages, populations, and more.
+            By providing interesting and informative information about each country, our goal is to broaden your
+            knowledge
+            and understanding of the world.
+        </p>
+        <p>
+            At NationHub, our mission is to create a user-friendly and engaging experience that allows you to dive into
+            the
+            diverse cultures and characteristics
+            of countries across the globe. We believe that learning about different nations should be accessible and
+            enjoyable for everyone.
+        </p>
+        <p>
+            To gather and present country data, NationHub relies on the following APIs:
+        </p>
+        <ul>
+            <li>
+                <a class="social-link" href="https://restcountries.com/">Rest Countries API</a> - Provides comprehensive
+                information about
+                countries, including their names,
+                capitals, languages, populations, and more.
+            </li>
+            <li>
+                <a class="social-link" href="https://api-ninjas.com/">API Ninjas</a> - Offers additional data such as
+                GDP,
+                GDP per capita,
+                and currency exchange rates for countries.
+            </li>
+            <li>
+                <a class="social-link" href="https://www.geonames.org/">GeoNames API</a> - Enables the retrieval of city
+                data for each
+                country, including city names and populations.
+            </li>
+        </ul>
+        <p>
+            Through NationHub, flAks aspires to create a platform that fosters curiosity and appreciation for the
+            countries
+            of the world, ultimately contributing
+            to a more interconnected global community.
+        </p>
+    </div>
     <script>
         const overlay = document.querySelector('.overlay');
         const darkModeToggle = document.getElementById('dark-mode-toggle');
         const settingsWindow = document.getElementById('settings-window');
+        const githubLogoLight = document.getElementById('github-logo-light');
+        const githubLogoDark = document.getElementById('github-logo-dark');
 
         function toggleDarkMode() {
             const currentIcon = darkModeToggle.textContent;
-            const githubLogoLight = document.getElementById('github-logo-light');
-            const githubLogoDark = document.getElementById('github-logo-dark');
-
-            if (currentIcon === 'dark_mode') {
-                darkModeToggle.textContent = 'light_mode';
-                document.body.classList.remove('dark-mode');
-                document.body.classList.add('light-mode');
-                githubLogoLight.style.display = 'inline';
-                githubLogoDark.style.display = 'none';
-            } else {
-                darkModeToggle.textContent = 'dark_mode';
-                document.body.classList.remove('light-mode');
-                document.body.classList.add('dark-mode');
-                githubLogoLight.style.display = 'none';
-                githubLogoDark.style.display = 'inline';
-            }
-
+            const githubLogos = {
+                dark_mode: { display: 'inline' },
+                light_mode: { display: 'none' }
+            };
+            darkModeToggle.textContent = currentIcon === 'dark_mode' ? 'light_mode' : 'dark_mode';
+            document.body.classList.toggle('dark-mode', darkModeToggle.textContent === 'dark_mode');
+            document.body.classList.toggle('light-mode', darkModeToggle.textContent === 'light_mode');
             localStorage.setItem('darkModeIcon', darkModeToggle.textContent);
         }
 
@@ -126,17 +124,8 @@
             const savedIcon = localStorage.getItem('darkModeIcon');
             const githubLogoLight = document.getElementById('github-logo-light');
             const githubLogoDark = document.getElementById('github-logo-dark');
-            if (savedIcon === 'dark_mode') {
-                darkModeToggle.textContent = 'dark_mode';
-                document.body.classList.add('dark-mode');
-                githubLogoLight.style.display = 'none';
-                githubLogoDark.style.display = 'inline';
-            } else {
-                darkModeToggle.textContent = 'light_mode';
-                document.body.classList.add('light-mode');
-                githubLogoLight.style.display = 'inline';
-                githubLogoDark.style.display = 'none';
-            }
+            darkModeToggle.textContent = savedIcon === 'dark_mode' ? 'dark_mode' : 'light_mode';
+            document.body.classList.add(savedIcon === 'dark_mode' ? 'dark-mode' : 'light-mode');
             bigCardToggle = document.getElementById('big-card-toggle');
             const toggleIcon = document.querySelector('.toggle-icon');
             const toggleLabel = document.querySelector('.toggle-label');
