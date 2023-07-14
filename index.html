@@ -136,6 +136,9 @@
       let bigCardToggle;
       let map = null;
       let marker = null;
+      let selectedRowPage = null;
+      let openCountryRow = null;
+      let openExpandedCountryRow = null;
       let sortOrder = true;
       let currentPage = 1;
       let totalPages = 1;
@@ -164,7 +167,6 @@
 
       window.addEventListener('resize', function () {
         countriesPerPage = calculateCountriesPerPage();
-        console.log(countriesPerPage, " ", Math.ceil(independentCountries.length / countriesPerPage));
         filterCountriesByRegion();
         if (mapWindow && mapWindow.style.display === 'block') {
           hideMapOfCountry();
@@ -204,55 +206,63 @@
 
       async function renderCountriesTable(countries, currentPage) {
         const startIndex = (currentPage - 1) * countriesPerPage;
-        countriesTable.innerHTML = `
-          <tr>
-            <th class="flag-column"></th>
-            <th class="country-column">
-              <span>Country</span>
-              <button class="sort-button" onclick="sortTable()">
-                <span id="sort-symbol" class="material-symbols-outlined sort-icon">switch_right</span>
-              </button>
-            </th>
-          </tr>`;
-        const imagePromises = [];
-        const fragment = document.createDocumentFragment();
-        for (let i = startIndex; i < startIndex + countriesPerPage; i++) {
-          const country = filteredCountries[i];
-          if (!country) break;
-          const countryName = country.name.common;
-          const row = document.createElement('tr');
-          const imagePromise = loadResource(`https://flagcdn.com/24x18/${getCountryCode(country)}.png`, 'image');
-          imagePromises.push(imagePromise);
-          const imageCell = document.createElement('td');
-          const countryNameCell = document.createElement('td');
-          countryNameCell.textContent = countryName;
-          row.appendChild(imageCell);
-          row.appendChild(countryNameCell);
-          row.addEventListener('click', () => bigCardToggle.checked ? showExpandedCountryInfo(row, country) : showCountryInfo(row, country));
-          fragment.appendChild(row);
-        }
-        countriesTable.appendChild(fragment);
+        const tableBody = countriesTable.tBodies[0];
+        const imagePromises = filteredCountries
+          .slice(startIndex, startIndex + countriesPerPage)
+          .map(country => loadImage(`https://flagcdn.com/24x18/${getCountryCode(country)}.png`));
         const images = await Promise.all(imagePromises);
-        const flagCells = Array.from(countriesTable.querySelectorAll('td:first-child'));
-        flagCells.forEach((cell, index) => {
+        const maxRows = images.length;
+        while (tableBody.children.length > 1) {
+          tableBody.removeChild(tableBody.lastChild);
+        }
+        for (let i = 0; i < maxRows; i++) {
+          const country = filteredCountries[startIndex + i];
+          const { name: { common: countryName } } = country;
+          let row = tableBody.children[i + 1];
+          if (!row) {
+            row = document.createElement('tr');
+            tableBody.appendChild(row);
+          }
+          const imageCell = row.cells[0] || row.insertCell(0);
+          const countryNameCell = row.cells[1] || row.insertCell(1);
+          countryNameCell.textContent = countryName;
           const img = document.createElement('img');
-          img.src = images[index].src;
+          img.src = images[i].src;
           img.width = 24;
           img.height = 18;
-          img.alt = filteredCountries[startIndex + index].name.common + 'Flag';
-          cell.appendChild(img);
-        });
+          img.alt = `${countryName} Flag`;
+          if (imageCell.firstChild) {
+            imageCell.replaceChild(img, imageCell.firstChild);
+          } else {
+            imageCell.appendChild(img);
+          }
+          row.addEventListener('click', () => bigCardToggle.checked ? showExpandedCountryInfo(row, country) : showCountryInfo(row, country));
+          if (selectedRowPage === currentPage) {
+            if (openCountryRow && openCountryRow.rowElement.innerHTML === row.innerHTML) {
+              row.classList.add('selected');
+              openCountryRow.rowElement = row;
+            }
+            if (openExpandedCountryRow && openExpandedCountryRow.rowElement.innerHTML === row.innerHTML) {
+              row.classList.add('selected');
+              openExpandedCountryRow.row = row;
+            }
+          }
+        }
       }
 
       function handleSearch() {
         const searchInput = document.getElementById('search-input');
         const filterValue = searchInput.value.toLowerCase();
-        const visibleCountries = independentCountries.filter(country =>
-          country.name.common.toLowerCase().startsWith(filterValue)
-        );
-        renderCountriesTable(visibleCountries, currentPage);
+        filteredCountries = independentCountries.filter(country => {
+          const { name: { common: countryName } } = country;
+          return countryName.toLowerCase().startsWith(filterValue);
+        });
+        totalPages = Math.ceil(filteredCountries.length / countriesPerPage);
+        currentPage = 1;
+        renderPagination(totalPages);
+        renderCountriesTable(filteredCountries, currentPage);
       }
-      
+
       function filterCountriesByRegion() {
         const selectedRegions = Array.from(regionToggles)
           .filter(checkbox => checkbox.checked)
@@ -283,10 +293,15 @@
         currentPage = page;
         renderPagination(totalPages);
         renderCountriesTable(independentCountries, currentPage);
+        if (selectedRowPage !== page) {
+          if (openCountryRow && openCountryRow.rowElement) {
+            openCountryRow.rowElement.classList.remove('selected');
+          }
+          if (openExpandedCountryRow && openExpandedCountryRow.rowElement) {
+            openExpandedCountryRow.rowElement.classList.remove('selected');
+          }
+        }
       }
-
-      let openCountryRow = null;
-      let openExpandedCountryRow = null;
 
       function showExpandedCountryInfo(row, country) {
         if (!(openExpandedCountryRow && openExpandedCountryRow.rowElement === row)) {
@@ -295,7 +310,7 @@
           countryCard.classList.add('country-card');
           countryCard.innerHTML = '<div class="loader"></div>';
           const apiUrl = `https://api.api-ninjas.com/v1/country?name=${getCountryCode(country)}`;
-          loadResource(apiUrl, 'text', { headers: { 'X-Api-Key': 'W+OQ/iBAPzIQYLIRvdQgVQ==ixnCBWtlJHxmXrMv' } })
+          fetchResource(apiUrl, { headers: { 'X-Api-Key': 'W+OQ/iBAPzIQYLIRvdQgVQ==ixnCBWtlJHxmXrMv' } })
             .then(data => {
               const cachedData = JSON.parse(data);
               renderCountryInfo(cachedData);
@@ -312,7 +327,7 @@
             const territory = countryData.surface_area || 'N/A';
             const currencyCode = getCurrencyCode(country.currencies);
             const exchangeUrl = `https://api.api-ninjas.com/v1/convertcurrency?have=${currencyCode}&want=USD&amount=1`;
-            loadResource(exchangeUrl, 'text')
+            fetchResource(exchangeUrl)
               .then(data => {
                 const cachedData = JSON.parse(data);
                 displayCountryInfo(cachedData);
@@ -324,7 +339,7 @@
             async function displayCountryInfo(data) {
               const exchangeRate = data.new_amount;
               const currencyDisplay = `${currencyCode} (${exchangeRate.toFixed(2)} USD)`;
-              const flagImage = await loadResource(`https://flagcdn.com/h120/${getCountryCode(country)}.png`, 'image');
+              const flagImage = await loadImage(`https://flagcdn.com/h120/${getCountryCode(country)}.png`);
               countryCard.innerHTML = `
                 <span class="flag-coat">
                   <img class="flag-image" src="${flagImage.src}" alt="${country.name.common} Flag">
@@ -363,8 +378,9 @@
             }
           }
           row.classList.add('selected');
+          selectedRowPage = currentPage;
           document.body.appendChild(countryCard);
-          openExpandedCountryRow = {
+          openCountryRow = {
             rowElement: row,
             countryCard: countryCard
           };
@@ -376,7 +392,7 @@
           hideCountryInfo();
           const countryCard = document.createElement('div');
           countryCard.classList.add('country-card');
-          const flagImage = await loadResource(`https://flagcdn.com/h120/${getCountryCode(country)}.png`, 'image');
+          const flagImage = await loadImage(`https://flagcdn.com/h120/${getCountryCode(country)}.png`);
           countryCard.innerHTML = `
             <img src="${flagImage.src}" height="120" width="190" alt="${country.name.common} Flag">
             <span class="material-symbols-outlined close-icon">close</span>
@@ -386,6 +402,7 @@
             <p><strong>Population:</strong> ${country.population.toLocaleString()}</p>
             <span id="expand-icon" class="material-symbols-outlined">expand_more</span>`;
           row.classList.add('selected');
+          selectedRowPage = currentPage;
           document.body.appendChild(countryCard);
           openCountryRow = {
             rowElement: row,
@@ -395,6 +412,27 @@
           closeIcon?.addEventListener('click', () => hideCountryInfo());
           const expandIcon = document.getElementById('expand-icon');
           expandIcon?.addEventListener('click', () => showExpandedCountryInfo(row, country));
+        }
+      }
+
+      function hideCountryInfo() {
+        if (openCountryRow) {
+          if (openCountryRow.rowElement) {
+            openCountryRow.rowElement.classList.remove('selected');
+          }
+          if (openCountryRow.countryCard) {
+            document.body.removeChild(openCountryRow.countryCard);
+          }
+          openCountryRow = null;
+        }
+        if (openExpandedCountryRow) {
+          if (openExpandedCountryRow.rowElement) {
+            openExpandedCountryRow.rowElement.classList.remove('selected');
+          }
+          if (openExpandedCountryRow.countryCard) {
+            document.body.removeChild(openExpandedCountryRow.countryCard);
+          }
+          openExpandedCountryRow = null;
         }
       }
 
@@ -420,27 +458,6 @@
           return null;
         }
         showExpandedCountryInfo(row, country);
-      }
-
-      function hideCountryInfo() {
-        if (openCountryRow) {
-          if (openCountryRow.rowElement) {
-            openCountryRow.rowElement.classList.remove('selected');
-          }
-          if (openCountryRow.countryCard) {
-            document.body.removeChild(openCountryRow.countryCard);
-          }
-          openCountryRow = null;
-        }
-        if (openExpandedCountryRow) {
-          if (openExpandedCountryRow.rowElement) {
-            openExpandedCountryRow.rowElement.classList.remove('selected');
-          }
-          if (openExpandedCountryRow.countryCard) {
-            document.body.removeChild(openExpandedCountryRow.countryCard);
-          }
-          openExpandedCountryRow = null;
-        }
       }
 
       function showMapOfCountry(countryName) {
@@ -503,13 +520,12 @@
         cityTable.innerHTML = '<div class="loader"></div>';
         cityTable.style.display = 'block';
         const apiUrl = `https://secure.geonames.org/searchJSON?country=${getCountryCode(country)}&featureCode=PPLC&featureCode=PPLA&maxRows=1000&username=flaks`;
-        loadResource(apiUrl, 'text')
+        fetchResource(apiUrl, 'text')
           .then(data => {
             const cachedData = JSON.parse(data);
             if (cachedData.status && cachedData.status.value === 19) {
               throw new Error('Request limit exceeded');
             }
-            console.log(cachedData);
             processCityData(cachedData);
           })
           .catch(error => {

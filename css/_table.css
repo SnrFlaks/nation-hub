@@ -3,7 +3,6 @@ table {
     width: 100%;
     box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
     border-spacing: 0;
-    border-collapse: separate;
 }
 
 table th,
@@ -22,7 +21,7 @@ table tr:not(:first-child) {
 }
 
 table tr:not(:first-child):hover,
-tr.selected {
+table tr.selected {
     cursor: pointer;
     transform: scale(1.1);
     filter: drop-shadow(0 0 5px rgba(0, 0, 0, 0.7));
