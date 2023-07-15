@@ -215,39 +215,42 @@
         while (tableBody.children.length > 1) {
           tableBody.removeChild(tableBody.lastChild);
         }
-        for (let i = 0; i < maxRows; i++) {
-          const country = filteredCountries[startIndex + i];
-          const { name: { common: countryName } } = country;
-          let row = tableBody.children[i + 1];
-          if (!row) {
-            row = document.createElement('tr');
-            tableBody.appendChild(row);
-          }
-          const imageCell = row.cells[0] || row.insertCell(0);
-          const countryNameCell = row.cells[1] || row.insertCell(1);
-          countryNameCell.textContent = countryName;
-          const img = document.createElement('img');
-          img.src = images[i].src;
-          img.width = 24;
-          img.height = 18;
-          img.alt = `${countryName} Flag`;
-          if (imageCell.firstChild) {
-            imageCell.replaceChild(img, imageCell.firstChild);
-          } else {
-            imageCell.appendChild(img);
-          }
-          row.addEventListener('click', () => bigCardToggle.checked ? showExpandedCountryInfo(row, country) : showCountryInfo(row, country));
-          if (selectedRowPage === currentPage) {
-            if (openCountryRow && openCountryRow.rowElement.innerHTML === row.innerHTML) {
-              row.classList.add('selected');
-              openCountryRow.rowElement = row;
+        return new Promise(resolve => {
+          for (let i = 0; i < maxRows; i++) {
+            const country = filteredCountries[startIndex + i];
+            const { name: { common: countryName } } = country;
+            let row = tableBody.children[i + 1];
+            if (!row) {
+              row = document.createElement('tr');
+              tableBody.appendChild(row);
             }
-            if (openExpandedCountryRow && openExpandedCountryRow.rowElement.innerHTML === row.innerHTML) {
-              row.classList.add('selected');
-              openExpandedCountryRow.row = row;
+            const imageCell = row.cells[0] || row.insertCell(0);
+            const countryNameCell = row.cells[1] || row.insertCell(1);
+            countryNameCell.textContent = countryName;
+            const img = document.createElement('img');
+            img.src = images[i].src;
+            img.width = 24;
+            img.height = 18;
+            img.alt = `${countryName} Flag`;
+            if (imageCell.firstChild) {
+              imageCell.replaceChild(img, imageCell.firstChild);
+            } else {
+              imageCell.appendChild(img);
+            }
+            row.addEventListener('click', () => bigCardToggle.checked ? showExpandedCountryInfo(row, country) : showCountryInfo(row, country));
+            if (selectedRowPage === currentPage) {
+              if (openCountryRow && openCountryRow.rowElement.innerHTML === row.innerHTML) {
+                row.classList.add('selected');
+                openCountryRow.rowElement = row;
+              }
+              if (openExpandedCountryRow && openExpandedCountryRow.rowElement.innerHTML === row.innerHTML) {
+                row.classList.add('selected');
+                openExpandedCountryRow.row = row;
+              }
             }
           }
-        }
+          resolve();
+        });
       }
 
       function handleSearch() {
@@ -289,10 +292,10 @@
         filterCountriesByRegion();
       }
 
-      function setCurrentPage(page) {
+      async function setCurrentPage(page) {
         currentPage = page;
-        renderPagination(totalPages);
-        renderCountriesTable(independentCountries, currentPage);
+        await renderPagination(totalPages);
+        await renderCountriesTable(independentCountries, currentPage);
         if (selectedRowPage !== page) {
           if (openCountryRow && openCountryRow.rowElement) {
             openCountryRow.rowElement.classList.remove('selected');
@@ -436,28 +439,26 @@
         }
       }
 
-      function showNeighboringCountry(countryName) {
+      async function showNeighboringCountry(countryName) {
         if (!countryName) return;
         const country = independentCountries.find(c => c.name.common === countryName);
-        let row = getRowOfCountry(country);
-        if (!row) {
-          const countryIndex = independentCountries.findIndex(c => c.name.common === country.name.common);
-          const page = Math.ceil((countryIndex + 1) / countriesPerPage);
-          setCurrentPage(page);
-          row = getRowOfCountry(country);
-        }
-        function getRowOfCountry(country) {
-          const rows = countriesTable.getElementsByTagName('tr');
-          for (let i = 1; i < rows.length; i++) {
-            const currentRow = rows[i];
-            const countryName = currentRow.getElementsByTagName('td')[1].textContent.trim();
-            if (countryName === country.name.common) {
-              return currentRow;
-            }
-          }
-          return null;
-        }
+        const countryIndex = independentCountries.indexOf(country);
+        const page = Math.floor(countryIndex / countriesPerPage) + 1;
+        await setCurrentPage(page);
+        const row = getRowOfCountry(country);
         showExpandedCountryInfo(row, country);
+      }
+
+      function getRowOfCountry(country) {
+        const rows = countriesTable.querySelectorAll('tr');
+        for (let i = 1; i < rows.length; i++) {
+          const currentRow = rows[i];
+          const countryName = currentRow.cells[1].textContent.trim();
+          if (countryName === country.name.common) {
+            return currentRow;
+          }
+        }
+        return null;
       }
 
       function showMapOfCountry(countryName) {
@@ -536,7 +537,6 @@
         function processCityData({ geonames }) {
           const filteredCities = geonames.filter((cityData) => cityData.population > 0).sort((a, b) => b.population - a.population);
           const citiesPerPage = countriesPerPage > 15 ? 15 : countriesPerPage;
-          const totalPages = Math.ceil(filteredCities.length / citiesPerPage);
           const divContainer = document.createElement('div');
           divContainer.innerHTML = `
             <h2 class="city-title">Cities of ${countryName}</h2>
@@ -549,6 +549,14 @@
           const citiesTable = divContainer.querySelector('#cities-list');
           cityTable.innerHTML = '';
           cityTable.appendChild(divContainer);
+          renderCitiesTable(1);
+          if (totalPages > 1) {
+            renderCitiesPagination(totalPages);
+          }
+          overlay.style.display = 'block';
+          closeIcon.addEventListener('click', hideCountryCitiesTable);
+          overlay.addEventListener('click', hideCountryCitiesTable);
+
           function renderCitiesTable(page) {
             const startIndex = (page - 1) * citiesPerPage;
             const endIndex = startIndex + citiesPerPage;
@@ -559,37 +567,30 @@
                 <th>Population</th>
                 <th>Wiki</th>
               </tr> ${citiesToShow.map((cityData) => `
-                <tr onclick="openCountryWiki('${cityData.name}')">
-                  <td>${cityData.name}</td>
-                  <td>${cityData.population}</td>
-                  <td><span class="cities-wiki-icon">
-                  <img src="https://upload.wikimedia.org/wikipedia/commons/1/14/OOjs_UI_icon_logo-wikipedia.svg" alt="Wikipedia">
-                </span></td>
-                </tr>`).join('')}`;
+              <tr onclick="openCountryWiki('${cityData.name}')">
+                <td>${cityData.name}</td>
+                <td>${cityData.population}</td>
+                <td><span class="cities-wiki-icon">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/1/14/OOjs_UI_icon_logo-wikipedia.svg" alt="Wikipedia">
+              </span></td>
+              </tr>`).join('')}`;
           }
-          renderCitiesTable(1);
-          if (totalPages > 1) {
-            renderCitiesPagination(totalPages);
-          }
-          overlay.style.display = 'block';
-          closeIcon.addEventListener('click', hideCountryCitiesTable);
-          overlay.addEventListener('click', hideCountryCitiesTable);
-
           function renderCitiesPagination(totalPages) {
-            paginationContainer.innerHTML = '';
+            const citiesPaginationContainer = cityTable.querySelector('.cities-pagination-container');
+            citiesPaginationContainer.innerHTML = '';
             for (let i = 1; i <= totalPages; i++) {
               const button = document.createElement('button');
               button.textContent = i;
               button.addEventListener('click', () => {
                 renderCitiesTable(i);
-                const buttons = paginationContainer.querySelectorAll('button');
+                const buttons = citiesPaginationContainer.querySelectorAll('button');
                 buttons.forEach((btn) => btn.classList.remove('active'));
                 button.classList.add('active');
               });
               if (i === 1) {
                 button.classList.add('active');
               }
-              paginationContainer.appendChild(button);
+              citiesPaginationContainer.appendChild(button);
             }
           }
         }
@@ -600,41 +601,33 @@
         overlay.style.display = 'none';
       }
 
-      function getNeighboringCountries(country) {
-        if (country.borders && country.borders.length > 0) {
-          const neighboringCountries = country.borders
-            .map(border => {
-              const neighboringCountry = independentCountries.find(c => c.cca3 === border);
-              return neighboringCountry ? `<img class="neighboring-country-icon" src="https://flagcdn.com/24x18/${getCountryCode(neighboringCountry)}.png" alt="${neighboringCountry.name.common} Flag" onclick="showNeighboringCountry('${neighboringCountry.name.common}')"> ${neighboringCountry.name.common}` : '';
-            })
-            .filter(Boolean);
-          return neighboringCountries.join(', ');
-        }
-        return "Don't Have";
-      }
-
-
       function getCountryCode(country) {
         return (country.cca2 || country.cca3).toLowerCase();
       }
 
       function getCurrency(currencies) {
-        const currencyKeys = Object.keys(currencies);
-        if (currencyKeys.length > 0) {
-          const currencyCode = currencyKeys[0];
-          const currency = currencies[currencyCode];
-          return `${currency.name} (${currencyCode})`;
+        const [currencyCode] = Object.keys(currencies);
+        if (currencyCode) {
+          const { name } = currencies[currencyCode];
+          return `${name} (${currencyCode})`;
         }
         return 'N/A';
       }
 
       function getCurrencyCode(currencies) {
-        const currencyKeys = Object.keys(currencies);
-        if (currencyKeys.length > 0) {
-          const currencyCode = currencyKeys[0];
-          return `${currencyCode}`;
+        const [currencyCode] = Object.keys(currencies);
+        return currencyCode || 'N/A';
+      }
+
+      function getNeighboringCountries(country) {
+        if (country.borders && country.borders.length > 0) {
+          const neighboringCountries = country.borders.map(border => {
+            const neighboringCountry = independentCountries.find(c => c.cca3 === border);
+            return neighboringCountry ? `<img class="neighboring-country-icon" src="https://flagcdn.com/24x18/${getCountryCode(neighboringCountry)}.png" alt="${neighboringCountry.name.common} Flag" onclick="showNeighboringCountry('${neighboringCountry.name.common}')"> ${neighboringCountry.name.common}` : '';
+          }).filter(Boolean);
+          return neighboringCountries.length > 0 ? neighboringCountries.join(', ') : "Don't Have";
         }
-        return 'N/A';
+        return "Don't Have";
       }
 
       function sortTable() {
@@ -643,6 +636,7 @@
         renderCountriesTable(filteredCountries, currentPage);
         updateSortButton();
       }
+
       function toggleSortOrder() {
         sortOrder = !sortOrder;
         const sortSymbol = document.getElementById('sort-symbol');
@@ -729,39 +723,26 @@
         if (savedIcon) {
           darkModeToggle.textContent = savedIcon;
         }
-        document.body.classList.add(darkModeToggle.textContent === 'dark_mode' ? 'dark-mode' : 'light-mode');
+        document.body.classList.toggle('dark-mode', darkModeToggle.textContent === 'dark_mode');
         bigCardToggle = document.getElementById('big-card-toggle');
         const bigCardToggleIcon = document.querySelector('#settings-window .toggle-icon');
         const bigCardToggleLabel = document.querySelector('#settings-window .toggle-label');
-        bigCardToggleLabel.addEventListener('click', function () {
-          bigCardToggle.checked = !bigCardToggle.checked;
-          bigCardToggleIcon.src = bigCardToggle.checked ? '/images/toggle_on.svg' : '/images/toggle_off.svg';
-          localStorage.setItem('bigCardToggle', bigCardToggle.checked);
-        });
-        const initialBigCardValue = localStorage.getItem('bigCardToggle');
-        if (initialBigCardValue) {
-          bigCardToggle.checked = initialBigCardValue === 'true';
-        }
-        bigCardToggleIcon.src = bigCardToggle.checked ? '/images/toggle_on.svg' : '/images/toggle_off.svg';
-        regionToggleLabels.forEach((toggleLabel, index) => {
+        setToggleState(bigCardToggle, bigCardToggleIcon, 'bigCardToggle');
+        regionToggles.forEach((regionToggle, index) => {
+          const toggleLabel = regionToggleLabels[index];
           const toggleIcon = toggleLabel.querySelector('.toggle-icon');
-          const regionToggle = regionToggles[index];
-          toggleLabel.addEventListener('click', function () {
-            regionToggle.checked = !regionToggle.checked;
-            toggleIcon.src = regionToggle.checked ? '/images/toggle_on.svg' : '/images/toggle_off.svg';
-            localStorage.setItem(`regionToggle${index}`, regionToggle.checked);
-          });
-          const initialRegionToggleValue = localStorage.getItem(`regionToggle${index}`);
-          const initialToggleState = initialRegionToggleValue ? initialRegionToggleValue === 'true' : true;
-          regionToggle.checked = initialToggleState;
-          toggleIcon.src = initialToggleState ? '/images/toggle_on.svg' : '/images/toggle_off.svg';
-          toggleStates[index] = initialToggleState;
-          if (!initialRegionToggleValue) {
-            localStorage.setItem(`regionToggle${index}`, true);
-          }
+          setToggleState(regionToggle, toggleIcon, `regionToggle${index}`);
         });
         fetchCountries();
       });
+      function setToggleState(toggle, toggleIcon, storageKey) {
+        toggle.checked = localStorage.getItem(storageKey) === 'true';
+        toggleIcon.src = toggle.checked ? '/images/toggle_on.svg' : '/images/toggle_off.svg';
+        toggle.addEventListener('change', function () {
+          toggleIcon.src = toggle.checked ? '/images/toggle_on.svg' : '/images/toggle_off.svg';
+          localStorage.setItem(storageKey, toggle.checked);
+        });
+      }
     </script>
   </div>
 </body>
