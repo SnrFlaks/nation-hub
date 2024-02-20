@@ -572,8 +572,9 @@ document.addEventListener('DOMContentLoaded', function () {
     });
     fetchCountries();
 });
+
 function setToggleState(toggle, toggleIcon, storageKey) {
-    toggle.checked = localStorage.getItem(storageKey) === 'true';
+    toggle.checked = localStorage.getItem(storageKey) === null ? true : localStorage.getItem(storageKey) === 'true';
     toggleIcon.src = toggle.checked ? '/assets/images/toggle_on.svg' : '/assets/images/toggle_off.svg';
     toggle.addEventListener('change', function () {
         toggleIcon.src = toggle.checked ? '/assets/images/toggle_on.svg' : '/assets/images/toggle_off.svg';
