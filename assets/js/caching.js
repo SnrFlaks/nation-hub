@@ -29,29 +29,26 @@ function loadImage(url) {
   });
 }
 
-function fetchImage(url) {
-  return fetch(url)
-    .then(response => {
-      if (!response.ok) {
-        throw new Error('Failed to fetch image');
-      }
-      return response.blob();
-    })
-    .then(blob => {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          const imageDataUrl = reader.result;
-          resolve(imageDataUrl);
-        };
-        reader.onerror = reject;
-        reader.readAsDataURL(blob);
-      });
-    })
-    .catch(error => {
-      console.error('Error fetching image:', error);
-      throw error;
+async function fetchImage(url) {
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error('Failed to fetch image');
+    }
+    const blob = await response.blob();
+    return await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const imageDataUrl = reader.result;
+        resolve(imageDataUrl);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
     });
+  } catch (error) {
+    console.error('Error fetching image:', error);
+    throw error;
+  }
 }
 
 function fetchResource(url, options = {}) {
@@ -72,7 +69,7 @@ function fetchResource(url, options = {}) {
         .then(data => {
           try {
             const parsedData = JSON.parse(data);
-            if (parsedData.status && parsedData.status.value === 19) {
+            if (parsedData.status && parsedData.status.value ===   19) {
               throw new Error('Request limit exceeded');
             }
             localStorage.setItem(url, data);

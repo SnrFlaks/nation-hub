@@ -174,7 +174,7 @@ function resetFilters() {
 async function setCurrentPage(page) {
     if (currentPage === page) return;
     currentPage = page;
-    await renderPagination(totalPages);
+    renderPagination(totalPages);
     await renderCountriesTable(independentCountries, currentPage);
     if (selectedRowPage !== page) {
         if (openCountryRow && openCountryRow.rowElement) {
@@ -201,59 +201,48 @@ function showExpandedCountryInfo(row, country) {
             .catch(error => {
                 handleError(error, countryCard);
             });
-
-        function renderCountryInfo(data) {
+        async function renderCountryInfo(data) {
             const countryData = data[0];
             const gdp = countryData.gdp || 'N/A';
             const gdpGrowth = countryData.gdp_growth || 'N/A';
             const gdpPerCapita = countryData.gdp_per_capita || 'N/A';
             const territory = countryData.surface_area || 'N/A';
             const currencyCode = getCurrencyCode(country.currencies);
-            const exchangeUrl = `https://api.api-ninjas.com/v1/convertcurrency?have=${currencyCode}&want=USD&amount=1`;
-            fetchResource(exchangeUrl)
-                .then(data => {
-                    const cachedData = JSON.parse(data);
-                    displayCountryInfo(cachedData);
-                })
-                .catch(error => {
-                    handleError(error, countryCard);
-                });
-
-            async function displayCountryInfo(data) {
-                const exchangeRate = data.new_amount;
-                const currencyDisplay = `${currencyCode} (${exchangeRate.toFixed(2)} USD)`;
+            try {
                 const flagImage = await loadImage(`https://flagcdn.com/h120/${getCountryCode(country)}.png`);
                 countryCard.innerHTML = `
-                <span class="flag-coat">
-                  <img class="flag-image" src="${flagImage.src}" alt="${country.name.common} Flag">
-                  <img class="coat-image" src="https://mainfacts.com/media/images/coats_of_arms/${getCountryCode(country)}.svg" alt="${country.name.common} Coat" loading="lazy">
-                </span>
-                <span class="material-symbols-outlined close-icon">close</span>
-                <h2>
-                  ${country.name.common}
-                  <span class="material-symbols-outlined map-icon" onclick="showMapOfCountry('${country.name.common}')">location_on</span>
-                  <span class="material-symbols-outlined cities-icon" onclick="showCountryCitiesTable('${country.name.common}')">apartment</span>
-                </h2>
-                <p><strong>Capital:</strong> ${country.capital}</p>
-                <p><strong>Language:</strong> ${country.languages[Object.keys(country.languages)[0]]}</p>
-                <p><strong>Currency:</strong> ${currencyDisplay}</p>
-                <p><strong>GDP:</strong> $${(gdp / 1000).toFixed(2)}b <i class="fas fa-dollar-sign"></i></p>
-                <p><strong>GDP Per Capita:</strong> $${gdpPerCapita} <i class="fas fa-dollar-sign"></i></p>
-                <p><strong>GDP Growth:</strong> <span class="gdp-growth ${gdpGrowth > 0 ? 'positive' : 'negative'}">${gdpGrowth}% ${gdpGrowth > 0 ? '&#8593;' : '&#8595;'}</span></p>
-                <p><strong>Population:</strong> ${country.population.toLocaleString()}</p>
-                <p><strong>Territory:</strong> ${territory} km<sup>2</sup></p>
-                <p><strong>Region:</strong> ${country.region}/${country.subregion}</p>
-                <p><strong>Neighboring Countries:</strong> ${getNeighboringCountries(country)}</p>
-                <span class="wiki-icon" onclick="openCountryWiki('${country.name.common}')">
-                  <img src="https://upload.wikimedia.org/wikipedia/commons/1/14/OOjs_UI_icon_logo-wikipedia.svg" alt="Wikipedia">
-                </span>
-                <span id="expand-icon-less" class="material-symbols-outlined">expand_less</span>`;
+                    <span class="flag-coat">
+                      <img class="flag-image" src="${flagImage.src}" alt="${country.name.common} Flag">
+                      <img class="coat-image" src="https://mainfacts.com/media/images/coats_of_arms/${getCountryCode(country)}.svg" alt="${country.name.common} Coat" loading="lazy">
+                    </span>
+                    <span class="material-symbols-outlined close-icon">close</span>s
+                    <h2>
+                      ${country.name.common}
+                      <span class="material-symbols-outlined map-icon" onclick="showMapOfCountry('${country.name.common}')">location_on</span>
+                      <span class="material-symbols-outlined cities-icon" onclick="showCountryCitiesTable('${country.name.common}')">apartment</span>
+                    </h2>
+                    <p><strong>Capital:</strong> ${country.capital}</p>
+                    <p><strong>Language:</strong> ${country.languages[Object.keys(country.languages)[0]]}</p>
+                    <p><strong>Currency:</strong> ${currencyCode}</p>
+                    <p><strong>GDP:</strong> $${(gdp / 1000).toFixed(2)}b <i class="fas fa-dollar-sign"></i></p>
+                    <p><strong>GDP Per Capita:</strong> $${gdpPerCapita} <i class="fas fa-dollar-sign"></i></p>
+                    <p><strong>GDP Growth:</strong> <span class="gdp-growth ${gdpGrowth > 0 ? 'positive' : 'negative'}">${gdpGrowth}% ${gdpGrowth > 0 ? '&#8593;' : '&#8595;'}</span></p>
+                    <p><strong>Population:</strong> ${country.population.toLocaleString()}</p>
+                    <p><strong>Territory:</strong> ${territory} km<sup>2</sup></p>
+                    <p><strong>Region:</strong> ${country.region}/${country.subregion}</p>
+                    <p><strong>Neighboring Countries:</strong> ${getNeighboringCountries(country)}</p>
+                    <span class="wiki-icon" onclick="openCountryWiki('${country.name.common}')">
+                      <img src="https://upload.wikimedia.org/wikipedia/commons/1/14/OOjs_UI_icon_logo-wikipedia.svg" alt="Wikipedia">
+                    </span>
+                    <span id="expand-icon-less" class="material-symbols-outlined">expand_less</span>`;
                 const closeIcon = countryCard.querySelector('.close-icon');
                 closeIcon?.addEventListener('click', () => hideCountryInfo());
                 const expandIcon = document.getElementById('expand-icon-less');
                 expandIcon?.addEventListener('click', () => showCountryInfo(row, country));
                 const maxHeight = window.innerHeight * 0.7;
                 countryCard.style.fontSize = countryCard.offsetHeight > maxHeight ? '12px' : '18px';
+            } catch (error) {
+                handleError(error, countryCard);
             }
         }
         row.classList.add('selected');
