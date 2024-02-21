@@ -215,7 +215,7 @@ function showExpandedCountryInfo(row, country) {
                       <img class="flag-image" src="${flagImage.src}" alt="${country.name.common} Flag">
                       <img class="coat-image" src="https://mainfacts.com/media/images/coats_of_arms/${getCountryCode(country)}.svg" alt="${country.name.common} Coat" loading="lazy">
                     </span>
-                    <span class="material-symbols-outlined close-icon">close</span>s
+                    <span class="material-symbols-outlined close-icon">close</span>
                     <h2>
                       ${country.name.common}
                       <span class="material-symbols-outlined map-icon" onclick="showMapOfCountry('${country.name.common}')">location_on</span>
