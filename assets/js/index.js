@@ -83,7 +83,7 @@ function renderPagination(totalPages) {
     }
 }
 
-async function renderCountriesTable(countries, currentPage) {
+async function renderCountriesTable(currentPage) {
     const startIndex = (currentPage - 1) * countriesPerPage;
     const tableBody = countriesTable.tBodies[0];
     const imagePromises = filteredCountries
@@ -142,7 +142,7 @@ function handleSearch() {
     totalPages = Math.ceil(filteredCountries.length / countriesPerPage);
     currentPage = 1;
     renderPagination(totalPages);
-    renderCountriesTable(filteredCountries, currentPage);
+    renderCountriesTable(currentPage);
 }
 
 function filterCountriesByRegion() {
@@ -155,7 +155,7 @@ function filterCountriesByRegion() {
     totalPages = Math.ceil(filteredCountries.length / countriesPerPage);
     currentPage = 1;
     renderPagination(totalPages);
-    renderCountriesTable(filteredCountries, currentPage);
+    renderCountriesTable(currentPage);
     regionToggles.forEach((regionToggle, index) => {
         const toggleIcon = regionToggleLabels[index].querySelector('.toggle-icon');
         toggleStates[index] = regionToggle.checked;
@@ -175,7 +175,7 @@ async function setCurrentPage(page) {
     if (currentPage === page) return;
     currentPage = page;
     renderPagination(totalPages);
-    await renderCountriesTable(independentCountries, currentPage);
+    await renderCountriesTable(currentPage);
     if (selectedRowPage !== page) {
         if (openCountryRow && openCountryRow.rowElement) {
             openCountryRow.rowElement.classList.remove('selected');
@@ -193,7 +193,7 @@ function showExpandedCountryInfo(row, country) {
         countryCard.classList.add('country-card');
         countryCard.innerHTML = '<div class="loader"></div>';
         const apiUrl = `https://api.api-ninjas.com/v1/country?name=${getCountryCode(country)}`;
-        fetchResource(apiUrl, { headers: { 'X-Api-Key': 'W+OQ/iBAPzIQYLIRvdQgVQ==ixnCBWtlJHxmXrMv' } })
+        fetchResource(apiUrl, { headers: { 'X-Api-Key': 'Sr67tJkoVi67BP9jFHEMD4bMqnADf0n5O2zxWqSS' } })
             .then(data => {
                 const cachedData = JSON.parse(data);
                 renderCountryInfo(cachedData);
@@ -238,7 +238,7 @@ function showExpandedCountryInfo(row, country) {
                 const closeIcon = countryCard.querySelector('.close-icon');
                 closeIcon?.addEventListener('click', () => hideCountryInfo());
                 const expandIcon = document.getElementById('expand-icon-less');
-                expandIcon?.addEventListener('click', () => showCountryInfo(row, country));
+                expandIcon?.addEventListener('click', () => showCountryInfo(row, country, true));
                 const maxHeight = window.innerHeight * 0.7;
                 countryCard.style.fontSize = countryCard.offsetHeight > maxHeight ? '12px' : '18px';
             } catch (error) {
@@ -255,8 +255,8 @@ function showExpandedCountryInfo(row, country) {
     }
 }
 
-async function showCountryInfo(row, country) {
-    if (!(openCountryRow && openCountryRow.rowElement === row)) {
+async function showCountryInfo(row, country, isReduceCard = false) {
+    if (!(openCountryRow && openCountryRow.rowElement === row) || isReduceCard) {
         hideCountryInfo();
         const countryCard = document.createElement('div');
         countryCard.classList.add('country-card');
@@ -484,7 +484,7 @@ function getNeighboringCountries(country) {
 function sortTable() {
     toggleSortOrder();
     filteredCountries.reverse();
-    renderCountriesTable(filteredCountries, currentPage);
+    renderCountriesTable(currentPage);
     updateSortButton();
 }
 
@@ -574,7 +574,12 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 function setToggleState(toggle, toggleIcon, storageKey) {
-    toggle.checked = localStorage.getItem(storageKey) === null ? true : localStorage.getItem(storageKey) === 'true';
+    const item = localStorage.getItem(storageKey);
+    if (storageKey === 'bigCardToggle') {
+        toggle.checked = item !== null && item === 'true';
+    } else {
+        toggle.checked = item === null ? true : item === 'true';
+    }
     toggleIcon.src = toggle.checked ? '/assets/images/toggle_on.svg' : '/assets/images/toggle_off.svg';
     toggle.addEventListener('change', function () {
         toggleIcon.src = toggle.checked ? '/assets/images/toggle_on.svg' : '/assets/images/toggle_off.svg';
